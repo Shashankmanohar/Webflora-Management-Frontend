@@ -2,7 +2,7 @@ import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Edit, Trash2, History, Banknote } from "lucide-react";
+import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import AttendanceHistoryDialog from "@/components/AttendanceHistoryDialog";
 import SalaryPaymentDialog from "@/components/SalaryPaymentDialog";
@@ -47,6 +47,7 @@ const Interns = () => {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [internToDelete, setInternToDelete] = useState<any | null>(null);
     const [selectedIntern, setSelectedIntern] = useState<any | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     // Attendance History State
     const [attendanceInternId, setAttendanceInternId] = useState<string | null>(null);
@@ -429,7 +430,24 @@ const Interns = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password *</Label>
-                                <Input id="password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" required />
+                                <div className="relative">
+                                    <Input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        placeholder="••••••••"
+                                        className="pr-10"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors h-5 w-5 flex items-center justify-center"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Phone Number *</Label>
@@ -482,7 +500,23 @@ const Interns = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="edit-password">Password (leave blank)</Label>
-                                <Input id="edit-password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+                                <div className="relative">
+                                    <Input
+                                        id="edit-password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        placeholder="••••••••"
+                                        className="pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors h-5 w-5 flex items-center justify-center"
+                                    >
+                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="edit-phone">Phone Number *</Label>

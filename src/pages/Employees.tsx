@@ -2,7 +2,7 @@ import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Edit, Trash2, History, Banknote } from "lucide-react";
+import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff } from "lucide-react";
 import AttendanceHistoryDialog from "@/components/AttendanceHistoryDialog";
 import SalaryPaymentDialog from "@/components/SalaryPaymentDialog";
 import SalaryHistoryDialog from "@/components/SalaryHistoryDialog";
@@ -50,6 +50,7 @@ const Employees = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<any | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Attendance History State
   const [attendanceEmployeeId, setAttendanceEmployeeId] = useState<string | null>(null);
@@ -469,14 +470,24 @@ const Employees = () => {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors h-5 w-5 flex items-center justify-center"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -561,13 +572,23 @@ const Employees = () => {
 
             <div className="space-y-2">
               <Label htmlFor="edit-password">Password (leave blank to keep current)</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <Input
+                  id="edit-password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors h-5 w-5 flex items-center justify-center"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
