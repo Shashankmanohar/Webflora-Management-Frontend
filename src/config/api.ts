@@ -53,4 +53,9 @@ export const API_ENDPOINTS = {
     HANDOVER_BY_ID: (id: string) => `/api/handover/${id}`,
     HANDOVER_UPDATE: (id: string) => `/api/handover/update/${id}`,
     HANDOVER_DELETE: (id: string) => `/api/handover/delete/${id}`,
+
+    // Auth
+    AUTH_FORGOT_PASSWORD: '/api/auth/forgot-password',
+    AUTH_VERIFY_OTP: '/api/auth/verify-otp',
+    AUTH_RESET_PASSWORD: '/api/auth/reset-password',
 } as const;

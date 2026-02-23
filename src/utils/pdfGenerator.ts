@@ -73,7 +73,7 @@ export const generateInvoicePDF = (invoice: any) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(150, 150, 150);
-    doc.text("Thank you for choosing WebFlora Technologies!", 105, 280, { align: "center" });
+    doc.text("Thank you for choosing Webflora Technologies!", 105, 280, { align: "center" });
 
     // Save the PDF
     doc.save(`Invoice_${invoice.number || '000'}.pdf`);

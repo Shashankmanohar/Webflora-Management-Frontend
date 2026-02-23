@@ -75,7 +75,7 @@ const SidebarContent = ({
       )}>
         <img
           src="/webfloralogo.png"
-          alt="WebFlora"
+          alt="Webflora"
           className={cn(
             "h-full object-contain transition-all duration-500",
             collapsed ? "scale-110" : "max-w-[160px]"
