@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import StatCard from "@/components/StatCard";
 import {
@@ -82,6 +83,7 @@ const item = {
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<'monthly' | 'yearly'>('monthly');
+  const navigate = useNavigate();
 
   // Fetch real data from backend
   const { data: invoices = [], isLoading: invoicesLoading } = useInvoices();
@@ -245,6 +247,39 @@ const Dashboard = () => {
           changeType="neutral"
           icon={Users}
         />
+      </motion.div>
+
+      {/* Quick Actions */}
+      <motion.div
+        variants={item}
+        initial="hidden"
+        animate="show"
+        className="glass-card p-6 rounded-2xl flex flex-wrap gap-4 items-center justify-between border-primary/10 shadow-lg"
+      >
+        <div className="space-y-1">
+          <h3 className="text-lg font-bold">Quick Actions</h3>
+          <p className="text-xs text-muted-foreground">Jump directly into common management tasks</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            className="rounded-xl font-bold text-xs uppercase tracking-tight gap-2 premium-glow"
+            onClick={() => navigate("/clients?create=true")}
+          >
+            <Users className="w-4 h-4" /> Add Client
+          </Button>
+          <Button
+            className="rounded-xl font-bold text-xs uppercase tracking-tight gap-2 premium-glow"
+            onClick={() => navigate("/projects?create=true")}
+          >
+            <FolderKanban className="w-4 h-4" /> New Project
+          </Button>
+          <Button
+            className="rounded-xl font-bold text-xs uppercase tracking-tight gap-2 premium-glow"
+            onClick={() => navigate("/invoices?create=true")}
+          >
+            <Banknote className="w-4 h-4" /> Generate Invoice
+          </Button>
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

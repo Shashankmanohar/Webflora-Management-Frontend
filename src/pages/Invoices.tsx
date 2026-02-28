@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Edit, Trash2, Eye, FileDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, FileDown, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -54,6 +55,18 @@ const Invoices = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<any | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateDialogOpen(true);
+      // Remove the param after opening to prevent re-opening on refresh
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("create");
+      setSearchParams(newParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   const [formData, setFormData] = useState<{
     clientId: string;
     projectId: string;
@@ -64,6 +77,7 @@ const Invoices = () => {
     method: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque' | '';
     date: string;
     status: 'pending' | 'paid' | 'overdue';
+    previousDue: number;
   }>({
     clientId: "",
     projectId: "",
@@ -74,6 +88,7 @@ const Invoices = () => {
     method: "",
     date: new Date().toISOString().split('T')[0],
     status: "paid",
+    previousDue: 0,
   });
 
   const { data: invoices = [], isLoading, error } = useInvoices();
@@ -91,11 +106,6 @@ const Invoices = () => {
       inv.projectName?.toLowerCase().includes(search.toLowerCase()) ||
       inv.description?.toLowerCase().includes(search.toLowerCase())
   );
-
-  // Summary calculations removed as per user request
-  // const totalBilled = invoices.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-  // const totalPaid = invoices.filter((i: any) => i.status === "paid").reduce((sum: number, inv: any) => sum + (inv.total || 0), 0);
-  // const totalOutstanding = totalBilled - totalPaid;
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,7 +132,8 @@ const Invoices = () => {
         description: formData.description,
         method: formData.method as any,
         date: formData.date,
-        status: formData.status,
+        status: "paid",
+        previousDue: formData.previousDue,
       });
       setIsCreateDialogOpen(false);
       setFormData({
@@ -135,6 +146,7 @@ const Invoices = () => {
         method: "",
         date: new Date().toISOString().split('T')[0],
         status: "paid",
+        previousDue: 0,
       });
     } catch (error: any) {
       toast({
@@ -156,6 +168,7 @@ const Invoices = () => {
       method: invoice.method || "",
       date: invoice.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       status: "paid",
+      previousDue: invoice.previousDue || 0,
     });
     setSelectedInvoice(invoice);
     setIsEditDialogOpen(true);
@@ -166,11 +179,8 @@ const Invoices = () => {
     if (!selectedInvoice) return;
     const amountNum = Number(formData.amount);
 
-    // Frontend budget validation
     const project = projects.find((p: any) => p.id === formData.projectId);
     if (project) {
-      // If same project, budget available is dueAmount + current invoice amount
-      // If different project, budget available is just dueAmount
       const originalAmount = Number(selectedInvoice.amount) || 0;
       const budgetAvailable = formData.projectId === selectedInvoice.projectId
         ? (project.dueAmount || 0) + originalAmount
@@ -198,7 +208,8 @@ const Invoices = () => {
           description: formData.description,
           method: formData.method as any,
           date: formData.date,
-          status: formData.status,
+          status: "paid",
+          previousDue: formData.previousDue,
         },
       });
       setIsEditDialogOpen(false);
@@ -213,6 +224,7 @@ const Invoices = () => {
         method: "",
         date: new Date().toISOString().split('T')[0],
         status: "paid",
+        previousDue: 0,
       });
     } catch (error: any) {
       toast({
@@ -270,9 +282,6 @@ const Invoices = () => {
       />
 
       <div className="p-6 space-y-6">
-        {/* Summary Cards Removed as per user request */}
-
-        {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -283,7 +292,6 @@ const Invoices = () => {
           />
         </div>
 
-        {/* Invoices Table */}
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
@@ -314,7 +322,8 @@ const Invoices = () => {
                   <TableHead>Client</TableHead>
                   <TableHead>Project</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Current Amt</TableHead>
+                  <TableHead>Total Payable</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -326,7 +335,8 @@ const Invoices = () => {
                     <TableCell>{invoice.clientName}</TableCell>
                     <TableCell>{invoice.projectName}</TableCell>
                     <TableCell>{new Date(invoice.date).toLocaleDateString('en-IN')}</TableCell>
-                    <TableCell>{formatCurrency(invoice.total)}</TableCell>
+                    <TableCell className="font-medium text-muted-foreground">{formatCurrency(invoice.total)}</TableCell>
+                    <TableCell className="font-bold text-primary">{formatCurrency(invoice.grandTotal)}</TableCell>
                     <TableCell>
                       <StatusBadge status={invoice.status} />
                     </TableCell>
@@ -389,7 +399,8 @@ const Invoices = () => {
                     setFormData({
                       ...formData,
                       clientId: value,
-                      referenceNo: client?.referenceNo || ""
+                      referenceNo: client?.referenceNo || "",
+                      previousDue: client?.totalDue || 0
                     });
                   }}
                   required
@@ -400,7 +411,14 @@ const Invoices = () => {
                   <SelectContent>
                     {clients.map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
-                        {client.name}
+                        <div className="flex justify-between items-center w-full">
+                          <span>{client.name}</span>
+                          {client.totalDue > 0 && (
+                            <span className="text-[10px] text-destructive ml-2 font-bold px-1.5 py-0.5 bg-destructive/5 rounded border border-destructive/10">
+                              Due: {formatCurrency(client.totalDue)}
+                            </span>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -427,29 +445,14 @@ const Invoices = () => {
                       ))}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="invoiceNo">Invoice Number *</Label>
-                <Input
-                  id="invoiceNo"
-                  value={formData.invoiceNo}
-                  onChange={(e) => setFormData({ ...formData, invoiceNo: e.target.value })}
-                  placeholder="INV001"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="date">Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                />
+                {formData.projectId && (
+                  <p className="text-[10px] font-medium text-muted-foreground mt-1 px-1 flex justify-between">
+                    <span>Remaining Budget:</span>
+                    <span className="text-primary font-bold">
+                      {formatCurrency(projects.find((p: any) => p.id === formData.projectId)?.dueAmount || 0)}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
 
@@ -465,37 +468,87 @@ const Invoices = () => {
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="method">Payment Method *</Label>
-                <Select
-                  value={formData.method}
-                  onValueChange={(value: any) => setFormData({ ...formData, method: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                    <SelectItem value="UPI">UPI</SelectItem>
-                    <SelectItem value="Cash">Cash</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
-                    <SelectItem value="Card">Card</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
-            {/* Status hidden and defaulted to Paid */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Work details..."
-                rows={3}
-              />
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invoiceNo">Invoice Number</Label>
+                  <Input
+                    id="invoiceNo"
+                    value={formData.invoiceNo}
+                    onChange={(e) => setFormData({ ...formData, invoiceNo: e.target.value })}
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {formData.clientId && formData.previousDue > 0 && (
+                <div className="bg-destructive/5 border border-destructive/10 rounded-lg p-3 flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                      <History className="w-4 h-4 text-destructive" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Outstanding Balance</p>
+                      <p className="text-base font-bold text-destructive leading-tight">{formatCurrency(formData.previousDue)}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] text-muted-foreground italic leading-tight">This will be added to the<br />Final Payable Amount</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="method">Payment Method</Label>
+                  <Select
+                    value={formData.method}
+                    onValueChange={(value: any) => setFormData({ ...formData, method: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="UPI">UPI</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="Cheque">Cheque</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="referenceNo">Reference No</Label>
+                  <Input
+                    id="referenceNo"
+                    value={formData.referenceNo}
+                    onChange={(e) => setFormData({ ...formData, referenceNo: e.target.value })}
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Work details..."
+                  rows={2}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
@@ -531,7 +584,8 @@ const Invoices = () => {
                     setFormData({
                       ...formData,
                       clientId: value,
-                      referenceNo: client?.referenceNo || ""
+                      referenceNo: client?.referenceNo || "",
+                      previousDue: client?.totalDue || 0
                     });
                   }}
                   required
@@ -542,7 +596,14 @@ const Invoices = () => {
                   <SelectContent>
                     {clients.map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
-                        {client.name}
+                        <div className="flex justify-between items-center w-full">
+                          <span>{client.name}</span>
+                          {client.totalDue > 0 && (
+                            <span className="text-[10px] text-destructive ml-2 font-bold px-1.5 py-0.5 bg-destructive/5 rounded border border-destructive/10">
+                              Due: {formatCurrency(client.totalDue)}
+                            </span>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -569,17 +630,27 @@ const Invoices = () => {
                       ))}
                   </SelectContent>
                 </Select>
+                {formData.projectId && (
+                  <p className="text-[10px] font-medium text-muted-foreground mt-1 px-1 flex justify-between">
+                    <span>Remaining Budget:</span>
+                    <span className="text-primary font-bold">
+                      {formatCurrency(
+                        (projects.find((p: any) => p.id === formData.projectId)?.dueAmount || 0) +
+                        (formData.projectId === selectedInvoice?.projectId ? Number(selectedInvoice.amount) : 0)
+                      )}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-invoiceNo">Invoice Number *</Label>
+                <Label htmlFor="edit-invoiceNo">Invoice Number</Label>
                 <Input
                   id="edit-invoiceNo"
                   value={formData.invoiceNo}
                   onChange={(e) => setFormData({ ...formData, invoiceNo: e.target.value })}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -593,6 +664,23 @@ const Invoices = () => {
                 />
               </div>
             </div>
+
+            {formData.clientId && formData.previousDue > 0 && (
+              <div className="bg-destructive/5 border border-destructive/10 rounded-lg p-3 flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <History className="w-4 h-4 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Outstanding Balance</p>
+                    <p className="text-base font-bold text-destructive leading-tight">{formatCurrency(formData.previousDue)}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-muted-foreground italic leading-tight">This will be added to the<br />Final Payable Amount</p>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -626,7 +714,6 @@ const Invoices = () => {
               </div>
             </div>
 
-            {/* Status hidden and defaulted to Paid */}
             <div className="space-y-2">
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
@@ -704,9 +791,33 @@ const Invoices = () => {
                   <p className="text-foreground mt-1">{selectedInvoice.method}</p>
                 </div>
               </div>
-              <div>
-                <Label className="text-muted-foreground">Amount</Label>
-                <p className="text-foreground font-bold text-2xl mt-1">{formatCurrency(selectedInvoice.total)}</p>
+              <div className="bg-primary/5 border border-primary/10 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground font-medium">Current Amount:</span>
+                  <span className="font-semibold">{formatCurrency(selectedInvoice.total)}</span>
+                </div>
+                {selectedInvoice.previousDue > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm text-destructive">
+                      <span className="font-medium">Previous Balance:</span>
+                      <span className="font-bold">+ {formatCurrency(selectedInvoice.previousDue)}</span>
+                    </div>
+                    {selectedInvoice.dueBreakdown && selectedInvoice.dueBreakdown.length > 0 && (
+                      <div className="pl-4 border-l-2 border-destructive/20 space-y-1">
+                        {selectedInvoice.dueBreakdown.map((item: any, idx: number) => (
+                          <div key={idx} className="flex justify-between text-[11px] text-destructive/80 italic">
+                            <span>{item.projectName}:</span>
+                            <span>{formatCurrency(item.amount)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="pt-2 border-t border-primary/20 flex justify-between items-center">
+                  <span className="text-base font-bold text-primary">GRAND TOTAL:</span>
+                  <span className="text-2xl font-black text-primary">{formatCurrency(selectedInvoice.grandTotal)}</span>
+                </div>
               </div>
               {selectedInvoice.description && (
                 <div>

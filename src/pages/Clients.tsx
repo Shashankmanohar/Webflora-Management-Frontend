@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,15 @@ import { Label } from "@/components/ui/label";
 import { useClients, useCreateClient, useUpdateClient, useDeleteClient } from "@/hooks/useClients";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -36,6 +46,18 @@ const Clients = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<any | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setIsCreateDialogOpen(true);
+      // Remove the param after opening to prevent re-opening on refresh
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("create");
+      setSearchParams(newParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   const [formData, setFormData] = useState({
     clientName: "",
     email: "",
@@ -169,93 +191,76 @@ const Clients = () => {
           />
         </div>
 
-        {/* Clients Grid */}
+        {/* Clients Table */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-16 rounded-xl" />
             ))}
           </div>
         ) : filteredClients.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-20 border-2 border-dashed border-border rounded-xl">
             <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {search ? "No clients found" : "No clients yet"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              {search ? "Try adjusting your search" : "Get started by adding your first client"}
-            </p>
-            {!search && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Client
-              </Button>
-            )}
+            <h3 className="text-lg font-semibold text-foreground mb-1">No clients found</h3>
+            <p className="text-sm text-muted-foreground mb-6">Start by adding your first client.</p>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Add Client
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredClients.map((client: any) => (
-              <div
-                key={client.id}
-                className="bg-card border border-border rounded-xl p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground text-base mb-1">
-                      {client.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5" />
-                      {client.company}
-                    </p>
-                  </div>
-                  <StatusBadge status={client.status} />
-                </div>
-
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    <span className="truncate">{client.email}</span>
-                  </div>
-
-                  <div className="pt-3 border-t border-border">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Total Billed</span>
-                      <span className="text-sm font-semibold text-foreground">
+          <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="font-bold py-4">Client Name</TableHead>
+                    <TableHead className="font-bold py-4">Email</TableHead>
+                    <TableHead className="font-bold py-4">Contact Number</TableHead>
+                    <TableHead className="font-bold py-4">Total Billed</TableHead>
+                    <TableHead className="font-bold py-4">Projects</TableHead>
+                    <TableHead className="font-bold py-4 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client: any) => (
+                    <TableRow key={client.id} className="group hover:bg-muted/30 transition-colors">
+                      <TableCell className="font-medium py-3.5 tracking-tight">
+                        {client.name}
+                      </TableCell>
+                      <TableCell className="text-sm py-3.5">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                          {client.email}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm py-3.5">
+                        {client.phone}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold py-3.5 mono">
                         {formatCurrency(client.totalBilled)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mt-1.5">
-                      <span className="text-xs text-muted-foreground">Projects</span>
-                      <span className="text-sm font-medium text-foreground">
-                        {client.projects}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-3 border-t border-border">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleEditClick(client)}
-                    >
-                      <Edit className="w-3.5 h-3.5 mr-1.5" />
-                      Edit
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => setClientToDelete(client)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      </TableCell>
+                      <TableCell className="text-sm py-3.5">
+                        <Badge variant="secondary" className="font-medium">
+                          {client.projects} Projects
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right py-3.5">
+                        <div className="flex justify-end gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => handleEditClick(client)} title="Edit Client">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => setClientToDelete(client)} title="Delete Client">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </div>
@@ -278,49 +283,37 @@ const Clients = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="client@example.com"
-                required
-              />
-            </div>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="client@example.com"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="contactNumber">Contact Number *</Label>
-              <Input
-                id="contactNumber"
-                value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                placeholder="9876543210"
-                required
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="City, State"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address *</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="City, State"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="referenceNo">Reference Number *</Label>
-              <Input
-                id="referenceNo"
-                value={formData.referenceNo}
-                onChange={(e) => setFormData({ ...formData, referenceNo: e.target.value })}
-                placeholder="CL001"
-                required
-              />
+              <div className="space-y-2">
+                <Label htmlFor="referenceNo">Reference Number</Label>
+                <Input
+                  id="referenceNo"
+                  value={formData.referenceNo}
+                  onChange={(e) => setFormData({ ...formData, referenceNo: e.target.value })}
+                  placeholder="WT-REF-0001"
+                />
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
@@ -392,13 +385,12 @@ const Clients = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-referenceNo">Reference Number *</Label>
+              <Label htmlFor="edit-referenceNo">Reference Number</Label>
               <Input
                 id="edit-referenceNo"
                 value={formData.referenceNo}
                 onChange={(e) => setFormData({ ...formData, referenceNo: e.target.value })}
-                placeholder="CL001"
-                required
+                placeholder="WT-REF-0001"
               />
             </div>
 

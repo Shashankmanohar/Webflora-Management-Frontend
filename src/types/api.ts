@@ -119,6 +119,7 @@ export interface ClientBackend {
     email: string;
     address: string;
     referenceNo: string;
+    totalDue?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -151,6 +152,11 @@ export interface InvoiceBackend {
     method: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque';
     date: string;
     status: 'pending' | 'paid' | 'overdue';
+    previousDue?: number;
+    totalPaid?: number;
+    dueAmount?: number;
+    dueBreakdown?: Array<{ projectName: string; amount: number }>;
+    projectTotal?: number;
 }
 
 export interface CreateInvoiceRequest {
@@ -160,9 +166,10 @@ export interface CreateInvoiceRequest {
     invoiceNo: string;
     amount: number;
     description?: string;
-    method: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque';
+    method: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque' | '';
     date?: string;
     status?: 'pending' | 'paid' | 'overdue';
+    previousDue?: number;
 }
 
 export interface UpdateInvoiceRequest {
@@ -175,6 +182,7 @@ export interface UpdateInvoiceRequest {
     method?: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque';
     date?: string;
     status?: 'pending' | 'paid' | 'overdue';
+    previousDue?: number;
 }
 
 // Project Types (Backend)
@@ -323,6 +331,7 @@ export const adaptClientData = (client: ClientBackend): any => {
         joinDate: client.createdAt,
         address: client.address,
         referenceNo: client.referenceNo,
+        totalDue: client.totalDue || 0,
     };
 };
 
@@ -350,6 +359,10 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
         method: invoice.method,
         description: invoice.description,
         clientId: typeof invoice.clientId === 'string' ? invoice.clientId : (client as any)?._id,
+        projectDue: (project as any)?.dueAmount ?? 0,
+        previousDue: invoice.previousDue || 0,
+        dueBreakdown: invoice.dueBreakdown || [],
+        projectTotal: (project as any)?.totalAmount || amount,
     };
 };
 

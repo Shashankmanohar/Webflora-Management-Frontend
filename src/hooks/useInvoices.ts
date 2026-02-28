@@ -25,6 +25,7 @@ export const useCreateInvoice = () => {
         mutationFn: (data: CreateInvoiceRequest) => invoiceApi.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             toast.success('Invoice created successfully');
         },
         onError: (error: any) => {
@@ -42,6 +43,7 @@ export const useUpdateInvoice = () => {
             invoiceApi.update(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             toast.success('Invoice updated successfully');
         },
         onError: (error: any) => {
@@ -58,6 +60,7 @@ export const useDeleteInvoice = () => {
         mutationFn: (id: string) => invoiceApi.delete(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             toast.success('Invoice deleted successfully');
         },
         onError: (error: any) => {
