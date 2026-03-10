@@ -48,7 +48,7 @@ const Settings = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Phone</Label>
-                  <Input defaultValue="+91 98765 43210" className="h-9" />
+                  <Input defaultValue="+91 8863081255, +91 8540814729" className="h-9" />
                 </div>
                 <div className="space-y-1.5 md:col-span-2">
                   <Label className="text-xs">Address</Label>

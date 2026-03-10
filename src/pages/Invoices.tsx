@@ -55,6 +55,7 @@ const Invoices = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = useState<any | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -76,7 +77,7 @@ const Invoices = () => {
     description: string;
     method: 'Cash' | 'UPI' | 'Bank Transfer' | 'Card' | 'Cheque' | '';
     date: string;
-    status: 'pending' | 'paid' | 'overdue';
+    status: 'paid' | 'pending' | 'overdue';
     previousDue: number;
   }>({
     clientId: "",
@@ -100,11 +101,16 @@ const Invoices = () => {
   const { toast } = useToast();
 
   const filteredInvoices = invoices.filter(
-    (inv: any) =>
-      inv.number?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.clientName?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.projectName?.toLowerCase().includes(search.toLowerCase()) ||
-      inv.description?.toLowerCase().includes(search.toLowerCase())
+    (inv: any) => {
+      const matchesSearch = inv.number?.toLowerCase().includes(search.toLowerCase()) ||
+        inv.clientName?.toLowerCase().includes(search.toLowerCase()) ||
+        inv.projectName?.toLowerCase().includes(search.toLowerCase()) ||
+        inv.description?.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    }
   );
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
@@ -132,7 +138,7 @@ const Invoices = () => {
         description: formData.description,
         method: formData.method as any,
         date: formData.date,
-        status: "paid",
+        status: formData.status,
         previousDue: formData.previousDue,
       });
       setIsCreateDialogOpen(false);
@@ -167,7 +173,7 @@ const Invoices = () => {
       description: invoice.description || "",
       method: invoice.method || "",
       date: invoice.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      status: "paid",
+      status: invoice.status || "paid",
       previousDue: invoice.previousDue || 0,
     });
     setSelectedInvoice(invoice);
@@ -208,7 +214,7 @@ const Invoices = () => {
           description: formData.description,
           method: formData.method as any,
           date: formData.date,
-          status: "paid",
+          status: formData.status,
           previousDue: formData.previousDue,
         },
       });
@@ -282,14 +288,28 @@ const Invoices = () => {
       />
 
       <div className="p-6 space-y-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search invoices..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search invoices..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="w-full md:w-[180px]">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Invoices</SelectItem>
+                <SelectItem value="paid">Paid Only</SelectItem>
+                <SelectItem value="pending">Due Only</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {isLoading ? (
@@ -467,6 +487,22 @@ const Invoices = () => {
                   placeholder="5000"
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status *</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Due (Pending)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -709,6 +745,22 @@ const Invoices = () => {
                     <SelectItem value="Cash">Cash</SelectItem>
                     <SelectItem value="Cheque">Cheque</SelectItem>
                     <SelectItem value="Card">Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">Status *</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: any) => setFormData({ ...formData, status: value })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Due (Pending)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

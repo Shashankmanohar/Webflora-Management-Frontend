@@ -29,7 +29,7 @@ export const generateInvoicePDF = (invoice: any) => {
     doc.text([
         "IOC Colony, Kumhrar, Patna, 800026",
         "hello.webflora@gmail.com",
-        "+91 8863081255"
+        "+91 8863081255, +91 8540814729"
     ], pageWidth - 20, 25, { align: "right", lineHeightFactor: 1.5 });
 
     // Divider
@@ -58,7 +58,8 @@ export const generateInvoicePDF = (invoice: any) => {
     doc.text("Status:", 20, 88);
     const statusColor = statusText === 'PAID' ? { r: 0, g: 150, b: 0 } : { r: 200, g: 0, b: 0 };
     doc.setTextColor(statusColor.r, statusColor.g, statusColor.b);
-    doc.text(statusText, 35, 88);
+    const displayStatus = statusText === 'PAID' ? 'PAID' : 'DUE';
+    doc.text(displayStatus, 35, 88);
 
     // 3. Billing Info (Clean Address Block)
     doc.setTextColor(80, 80, 80);

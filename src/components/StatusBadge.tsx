@@ -12,7 +12,7 @@ interface StatusBadgeProps {
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "badge-success" },
   partial: { label: "Partial", className: "badge-warning" },
-  pending: { label: "Pending", className: "badge-warning" },
+  pending: { label: "Due", className: "badge-warning" },
   overdue: { label: "Overdue", className: "badge-destructive" },
   active: { label: "Active", className: "badge-success" },
   inactive: { label: "Inactive", className: "badge-destructive" },

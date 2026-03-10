@@ -44,7 +44,7 @@ export interface Client {
 }
 
 export const clients: Client[] = [
-  { id: "1", name: "Rajesh Sharma", company: "TechVista Solutions", email: "rajesh@techvista.in", phone: "+91 98765 43210", projects: 4, totalBilled: 850000, status: "active", avatar: "RS", joinDate: "2023-02-15" },
+  { id: "1", name: "Rajesh Sharma", company: "TechVista Solutions", email: "rajesh@techvista.in", phone: "+91 88630 81255", projects: 4, totalBilled: 850000, status: "active", avatar: "RS", joinDate: "2023-02-15" },
   { id: "2", name: "Priya Nair", company: "GreenLeaf Organics", email: "priya@greenleaf.com", phone: "+91 87654 32109", projects: 2, totalBilled: 320000, status: "active", avatar: "PN", joinDate: "2023-06-20" },
   { id: "3", name: "Amit Patel", company: "CloudNine Enterprises", email: "amit@cloudnine.co", phone: "+91 76543 21098", projects: 3, totalBilled: 650000, status: "active", avatar: "AP", joinDate: "2023-01-10" },
   { id: "4", name: "Sneha Reddy", company: "PixelPerfect Media", email: "sneha@pixelperfect.in", phone: "+91 65432 10987", projects: 1, totalBilled: 180000, status: "prospect", avatar: "SR", joinDate: "2024-01-05" },
