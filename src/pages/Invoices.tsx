@@ -79,6 +79,7 @@ const Invoices = () => {
     date: string;
     status: 'paid' | 'pending' | 'overdue';
     previousDue: number;
+    items: { service: string; units: string; price: number }[];
   }>({
     clientId: "",
     projectId: "",
@@ -90,6 +91,7 @@ const Invoices = () => {
     date: new Date().toISOString().split('T')[0],
     status: "paid",
     previousDue: 0,
+    items: [],
   });
 
   const { data: invoices = [], isLoading, error } = useInvoices();
@@ -115,7 +117,9 @@ const Invoices = () => {
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amountNum = Number(formData.amount);
+    const amountNum = formData.items && formData.items.length > 0 
+      ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+      : Number(formData.amount);
 
     // Frontend budget validation
     const project = projects.find((p: any) => p.id === formData.projectId);
@@ -140,6 +144,7 @@ const Invoices = () => {
         date: formData.date,
         status: formData.status,
         previousDue: formData.previousDue,
+        items: formData.items,
       });
       setIsCreateDialogOpen(false);
       setFormData({
@@ -153,6 +158,7 @@ const Invoices = () => {
         date: new Date().toISOString().split('T')[0],
         status: "paid",
         previousDue: 0,
+        items: [],
       });
     } catch (error: any) {
       toast({
@@ -175,6 +181,7 @@ const Invoices = () => {
       date: invoice.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       status: invoice.status || "paid",
       previousDue: invoice.previousDue || 0,
+      items: invoice.items || [],
     });
     setSelectedInvoice(invoice);
     setIsEditDialogOpen(true);
@@ -183,7 +190,9 @@ const Invoices = () => {
   const handleUpdateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedInvoice) return;
-    const amountNum = Number(formData.amount);
+    const amountNum = formData.items && formData.items.length > 0 
+      ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+      : Number(formData.amount);
 
     const project = projects.find((p: any) => p.id === formData.projectId);
     if (project) {
@@ -216,6 +225,7 @@ const Invoices = () => {
           date: formData.date,
           status: formData.status,
           previousDue: formData.previousDue,
+          items: formData.items,
         },
       });
       setIsEditDialogOpen(false);
@@ -231,6 +241,7 @@ const Invoices = () => {
         date: new Date().toISOString().split('T')[0],
         status: "paid",
         previousDue: 0,
+        items: [],
       });
     } catch (error: any) {
       toast({
@@ -404,7 +415,7 @@ const Invoices = () => {
 
       {/* Create Invoice Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Invoice</DialogTitle>
           </DialogHeader>
@@ -498,9 +509,10 @@ const Invoices = () => {
                 <Input
                   id="amount"
                   type="number"
-                  value={formData.amount}
+                  value={formData.items.length > 0 ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0) : formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="5000"
+                  disabled={formData.items.length > 0}
                   required
                 />
               </div>
@@ -575,8 +587,82 @@ const Invoices = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+              <div className="space-y-4 col-span-2">
+                <div className="flex items-center justify-between">
+                  <Label>Invoice Items (Optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({
+                      ...formData,
+                      items: [...formData.items, { service: "", units: "", price: 0 }]
+                    })}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
+                {formData.items.length > 0 && (
+                  <div className="space-y-3">
+                    {formData.items.map((item, index) => (
+                      <div key={index} className="flex gap-2 items-start">
+                        <div className="flex-1 space-y-1">
+                          <Input
+                            placeholder="Service (e.g., SM Handling Fee)"
+                            value={item.service}
+                            onChange={(e) => {
+                              const newItems = [...formData.items];
+                              newItems[index].service = e.target.value;
+                              setFormData({ ...formData, items: newItems });
+                            }}
+                          />
+                        </div>
+                        <div className="w-1/4 space-y-1">
+                          <Input
+                            placeholder="Units (e.g., 4 x ₹400)"
+                            value={item.units}
+                            onChange={(e) => {
+                              const newItems = [...formData.items];
+                              newItems[index].units = e.target.value;
+                              setFormData({ ...formData, items: newItems });
+                            }}
+                          />
+                        </div>
+                        <div className="w-1/4 space-y-1">
+                          <Input
+                            type="number"
+                            placeholder="Price"
+                            value={item.price === 0 ? "" : item.price}
+                            onChange={(e) => {
+                              const newItems = [...formData.items];
+                              newItems[index].price = Number(e.target.value);
+                              setFormData({ ...formData, items: newItems });
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newItems = formData.items.filter((_, i) => i !== index);
+                            setFormData({ ...formData, items: newItems });
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                    <div className="flex justify-end pr-10 text-sm font-bold">
+                      Calculated Total: {formatCurrency(formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="description">Description (If not using line items)</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
@@ -605,7 +691,7 @@ const Invoices = () => {
 
       {/* Edit Invoice Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[700px]">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Invoice</DialogTitle>
           </DialogHeader>
@@ -740,8 +826,9 @@ const Invoices = () => {
                 <Input
                   id="edit-amount"
                   type="number"
-                  value={formData.amount}
+                  value={formData.items.length > 0 ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0) : formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  disabled={formData.items.length > 0}
                   required
                 />
               </div>
@@ -769,8 +856,82 @@ const Invoices = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
+            <div className="space-y-4 col-span-2">
+              <div className="flex items-center justify-between">
+                <Label>Invoice Items (Optional)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFormData({
+                     ...formData,
+                     items: [...formData.items, { service: "", units: "", price: 0 }]
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Item
+                </Button>
+              </div>
+              {formData.items.length > 0 && (
+                <div className="space-y-3">
+                  {formData.items.map((item, index) => (
+                    <div key={index} className="flex gap-2 items-start">
+                      <div className="flex-1 space-y-1">
+                        <Input
+                          placeholder="Service"
+                          value={item.service}
+                          onChange={(e) => {
+                            const newItems = [...formData.items];
+                            newItems[index].service = e.target.value;
+                            setFormData({ ...formData, items: newItems });
+                          }}
+                        />
+                      </div>
+                      <div className="w-1/4 space-y-1">
+                        <Input
+                          placeholder="Units"
+                          value={item.units}
+                          onChange={(e) => {
+                            const newItems = [...formData.items];
+                            newItems[index].units = e.target.value;
+                            setFormData({ ...formData, items: newItems });
+                          }}
+                        />
+                      </div>
+                      <div className="w-1/4 space-y-1">
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          value={item.price === 0 ? "" : item.price}
+                          onChange={(e) => {
+                            const newItems = [...formData.items];
+                            newItems[index].price = Number(e.target.value);
+                            setFormData({ ...formData, items: newItems });
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newItems = formData.items.filter((_, i) => i !== index);
+                          setFormData({ ...formData, items: newItems });
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex justify-end pr-10 text-sm font-bold">
+                    Calculated Total: {formatCurrency(formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="edit-description">Description (If not using line items)</Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
@@ -874,6 +1035,37 @@ const Invoices = () => {
                   <span className="text-2xl font-black text-primary">{formatCurrency(selectedInvoice.grandTotal)}</span>
                 </div>
               </div>
+              {selectedInvoice.status !== 'paid' && selectedInvoice.grandTotal > 0 && (
+                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 flex justify-between items-center">
+                  <span className="text-sm font-medium text-orange-700 dark:text-orange-400">Please pay on UPI ID:</span>
+                  <span className="text-sm font-bold text-orange-600 dark:text-orange-500 select-all cursor-pointer">8540814729@upi</span>
+                </div>
+              )}
+              {selectedInvoice.items && selectedInvoice.items.length > 0 && (
+                <div>
+                  <Label className="text-muted-foreground mb-2 block">Invoice Items</Label>
+                  <div className="border border-border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="h-8">Service</TableHead>
+                          <TableHead className="h-8">Units</TableHead>
+                          <TableHead className="h-8 text-right">Price</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedInvoice.items.map((item: any, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell className="py-2">{item.service}</TableCell>
+                            <TableCell className="py-2">{item.units}</TableCell>
+                            <TableCell className="py-2 text-right">{formatCurrency(item.price || 0)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
               {selectedInvoice.description && (
                 <div>
                   <Label className="text-muted-foreground">Description</Label>

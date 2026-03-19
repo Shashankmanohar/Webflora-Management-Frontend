@@ -157,6 +157,7 @@ export interface InvoiceBackend {
     dueAmount?: number;
     dueBreakdown?: Array<{ projectName: string; amount: number }>;
     projectTotal?: number;
+    items?: Array<{ service: string; units: string; price: number }>;
 }
 
 export interface CreateInvoiceRequest {
@@ -170,6 +171,7 @@ export interface CreateInvoiceRequest {
     date?: string;
     status?: 'pending' | 'paid' | 'overdue';
     previousDue?: number;
+    items?: Array<{ service: string; units: string; price: number }>;
 }
 
 export interface UpdateInvoiceRequest {
@@ -183,6 +185,7 @@ export interface UpdateInvoiceRequest {
     date?: string;
     status?: 'pending' | 'paid' | 'overdue';
     previousDue?: number;
+    items?: Array<{ service: string; units: string; price: number }>;
 }
 
 // Project Types (Backend)
@@ -363,6 +366,7 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
         previousDue: invoice.previousDue || 0,
         dueBreakdown: invoice.dueBreakdown || [],
         projectTotal: (project as any)?.totalAmount || amount,
+        items: invoice.items || [],
     };
 };
 

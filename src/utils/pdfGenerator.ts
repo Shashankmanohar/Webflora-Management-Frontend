@@ -80,43 +80,85 @@ export const generateInvoicePDF = (invoice: any) => {
     if (invoice.address) doc.text(invoice.address, 120, 88);
 
     // 4. Items Table
-    const tableColumn = ["Sl", "Description", "Qty", "Unit Price", "Total"];
+    let tableColumn: string[] = [];
+    const tableRows: any[] = [];
+    const previousDue = Number(invoice.previousDue) || 0;
+    const breakdown = invoice.dueBreakdown || [];
 
-    // Main Item - Show Project Name and Total Project Value as requested
     const projectTotal = Number(invoice.projectTotal || invoice.amount || 0);
-    const tableRows = [
-        [
-            "1",
+    const hasItems = invoice.items && invoice.items.length > 0;
+
+    let colStyles: any = {};
+
+    if (hasItems) {
+        tableColumn = ["Service", "Units", "Price (INR)"];
+        invoice.items.forEach((item: any) => {
+            tableRows.push([
+                item.service,
+                item.units,
+                formatCurrency(item.price || 0)
+            ]);
+        });
+
+        if (breakdown.length > 0) {
+            breakdown.forEach((item: any) => {
+                tableRows.push([
+                    `Due of ${item.projectName || 'Previous Project'}`,
+                    "1",
+                    formatCurrency(item.amount || 0)
+                ]);
+            });
+        } else if (previousDue > 0) {
+            tableRows.push([
+                "Previous Outstanding Balance",
+                "-",
+                formatCurrency(previousDue)
+            ]);
+        }
+        
+        colStyles = {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'center' },
+            2: { cellWidth: 40, halign: 'right' },
+        };
+    } else {
+        tableColumn = ["Sl", "Description", "Qty", "Unit Price", "Total"];
+        let sl = 1;
+        tableRows.push([
+            (sl++).toString(),
             invoice.projectName || invoice.description || "Project Service",
             "1",
             formatCurrency(projectTotal),
             formatCurrency(projectTotal),
-        ],
-    ];
+        ]);
 
-    // Previous Dues as separate rows
-    let sl = 2;
-    const previousDue = Number(invoice.previousDue) || 0;
-    const breakdown = invoice.dueBreakdown || [];
-
-    if (breakdown.length > 0) {
-        breakdown.forEach((item: any) => {
+        if (breakdown.length > 0) {
+            breakdown.forEach((item: any) => {
+                tableRows.push([
+                    (sl++).toString(),
+                    `Due of ${item.projectName || 'Previous Project'}`,
+                    "1",
+                    formatCurrency(item.amount || 0),
+                    formatCurrency(item.amount || 0)
+                ]);
+            });
+        } else if (previousDue > 0) {
             tableRows.push([
                 (sl++).toString(),
-                `Due of ${item.projectName || 'Previous Project'}`,
+                "Previous Outstanding Balance",
                 "1",
-                formatCurrency(item.amount || 0),
-                formatCurrency(item.amount || 0)
+                formatCurrency(previousDue),
+                formatCurrency(previousDue)
             ]);
-        });
-    } else if (previousDue > 0) {
-        tableRows.push([
-            (sl++).toString(),
-            "Previous Outstanding Balance",
-            "1",
-            formatCurrency(previousDue),
-            formatCurrency(previousDue)
-        ]);
+        }
+        
+        colStyles = {
+            0: { cellWidth: 10, halign: 'center' },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 15, halign: 'center' },
+            3: { cellWidth: 35, halign: 'right' },
+            4: { cellWidth: 35, halign: 'right' },
+        };
     }
 
     autoTable(doc, {
@@ -130,13 +172,7 @@ export const generateInvoicePDF = (invoice: any) => {
             textColor: [50, 50, 50],
             valign: 'middle'
         },
-        columnStyles: {
-            0: { cellWidth: 10, halign: 'center' },
-            1: { cellWidth: 'auto' },
-            2: { cellWidth: 15, halign: 'center' },
-            3: { cellWidth: 35, halign: 'right' },
-            4: { cellWidth: 35, halign: 'right' },
-        },
+        columnStyles: colStyles,
         headStyles: {
             fillColor: [255, 95, 31],
             textColor: [255, 255, 255],
@@ -196,6 +232,18 @@ export const generateInvoicePDF = (invoice: any) => {
     doc.text("Due - ", pageWidth - 80, currentY);
     doc.setTextColor(255, 95, 31); // Brand Orange
     doc.text(formatCurrency(dueAmount), pageWidth - 25, currentY, { align: "right" });
+
+    // Payment UPI Info (Left side aligned with summary box)
+    if (dueAmount > 0 || displayStatus === 'DUE') {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(100, 100, 100);
+        doc.text("Please pay on UPI ID:", 20, boxY + 15);
+        
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 95, 31);
+        doc.text("8540814729@upi", 20, boxY + 22);
+    }
 
     // 6. Professional Footer
     doc.setDrawColor(240, 240, 240);
