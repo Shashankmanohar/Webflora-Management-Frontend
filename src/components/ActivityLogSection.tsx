@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
+import { formatDate } from "@/utils/dateUtils";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Plus, CalendarIcon, History, Pencil, Trash2, Save, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -190,7 +191,7 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
                         <div className="flex items-center space-x-2">
                             <History className="w-5 h-5 text-primary" />
                             <CardTitle className="text-xl font-black tracking-tight">
-                                {date ? format(date, "PPP") : "Select a Date"}
+                                {date ? formatDate(date) : "Select a Date"}
                             </CardTitle>
                         </div>
                         {selectedActivity && (

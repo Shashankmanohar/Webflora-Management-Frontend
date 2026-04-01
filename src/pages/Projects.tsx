@@ -35,6 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/utils/dateUtils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -213,7 +215,7 @@ const Projects = () => {
                       <TableCell className="text-sm py-3.5">
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Calendar className="w-3.5 h-3.5" />
-                          {project.deadline ? new Date(project.deadline).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "N/A"}
+                          {formatDate(project.deadline)}
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5">
@@ -338,11 +340,10 @@ const Projects = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="endDate">Deadline</Label>
-                  <Input
-                    id="endDate"
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  <DatePicker 
+                    date={formData.endDate} 
+                    setDate={(v) => setFormData({ ...formData, endDate: v })} 
+                    placeholder="Select deadline"
                   />
                 </div>
               </div>
@@ -439,11 +440,10 @@ const Projects = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-endDate">Deadline</Label>
-                <Input
-                  id="edit-endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                <DatePicker 
+                  date={formData.endDate} 
+                  setDate={(v) => setFormData({ ...formData, endDate: v })} 
+                  placeholder="Select deadline"
                 />
               </div>
             </div>
@@ -520,8 +520,8 @@ const Projects = () => {
                     <TableBody>
                       {selectedProject.invoices.map((invoice: any) => (
                         <TableRow key={invoice.id} className="cursor-default">
-                          <TableCell className="text-xs font-medium py-2.5">{invoice.number}</TableCell>
-                          <TableCell className="text-xs py-2.5">{new Date(invoice.issueDate).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs py-2.5">{invoice.number}</TableCell>
+                          <TableCell className="text-xs py-2.5">{formatDate(invoice.issueDate)}</TableCell>
                           <TableCell className="text-xs font-bold py-2.5 text-right">{formatCurrency(invoice.amount)}</TableCell>
                           <TableCell className="py-2.5 text-center">
                             <StatusBadge status={invoice.status} />
@@ -544,11 +544,11 @@ const Projects = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Start Date</p>
-                    <p className="text-xs font-semibold">{selectedProject?.startDate ? new Date(selectedProject.startDate).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs font-semibold">{formatDate(selectedProject?.startDate)}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase font-medium">Deadline</p>
-                    <p className="text-xs font-semibold">{selectedProject?.deadline ? new Date(selectedProject.deadline).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs font-semibold">{formatDate(selectedProject?.deadline)}</p>
                   </div>
                 </div>
               </div>

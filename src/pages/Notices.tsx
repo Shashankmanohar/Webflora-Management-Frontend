@@ -27,6 +27,8 @@ import { useInterns } from "@/hooks/useInterns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatDate } from "@/utils/dateUtils";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
     Select,
     SelectContent,
@@ -173,7 +175,7 @@ const Notices = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-4 pt-4 border-t border-border">
                                     <Calendar className="w-3.5 h-3.5" />
-                                    <span>{new Date(notice.date || notice.createdAt).toLocaleDateString('en-IN')}</span>
+                                    <span>{formatDate(notice.date || notice.createdAt)}</span>
                                 </div>
                             </div>
                         ))}
@@ -213,11 +215,10 @@ const Notices = () => {
 
                         <div className="space-y-2">
                             <Label htmlFor="date">Date</Label>
-                            <Input
-                                id="date"
-                                type="date"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            <DatePicker 
+                                date={formData.date} 
+                                setDate={(v) => setFormData({ ...formData, date: v })} 
+                                placeholder="Select date"
                             />
                         </div>
 

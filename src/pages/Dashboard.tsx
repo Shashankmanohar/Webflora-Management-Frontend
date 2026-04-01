@@ -138,7 +138,7 @@ const Dashboard = () => {
 
   // Generate monthly income data
   const monthlyIncomeData = Array.from({ length: 12 }, (_, i) => {
-    const month = new Date(currentYear, i, 1).toLocaleDateString('en-US', { month: 'short' });
+    const month = new Date(currentYear, i, 1).toLocaleDateString('en-IN', { month: 'short' });
     const monthInvoicesFiltered = invoices.filter(inv => {
       const invDate = new Date(inv.date);
       return invDate.getMonth() === i && invDate.getFullYear() === currentYear;
@@ -530,7 +530,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-xs font-bold text-foreground">{safeFormat(record.date, "MMM dd, yyyy")}</p>
+                      <p className="text-xs font-bold text-foreground">{safeFormat(record.date, "dd/MM/yyyy")}</p>
                       <p className="text-[10px] text-muted-foreground font-mono">{record.timeIn ? safeFormat(record.timeIn, "hh:mm a") : "—"}</p>
                     </div>
                     <Badge

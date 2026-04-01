@@ -30,7 +30,7 @@ import { useEmployees, useCreateEmployee, useUpdateEmployee, useDeleteEmployee }
 import { useAllAttendance } from "@/hooks/useAttendance";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { formatDate } from "@/utils/dateUtils";
 import {
   Table,
   TableBody,
@@ -87,15 +87,7 @@ const Employees = () => {
 
   const employeeAttendance = allAttendance.filter((a: any) => a.userModel === 'employee');
 
-  const safeFormat = (dateStr: string, formatStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return "Invalid Date";
-      return format(date, formatStr);
-    } catch (e) {
-      return "Invalid Date";
-    }
-  };
+  // Used central formatDate utility
 
   const filteredEmployees = employees.filter(
     (e: any) =>
@@ -424,7 +416,7 @@ const Employees = () => {
                     employeeAttendance.map((record: any) => (
                       <TableRow key={record._id || record.id} className="border-border/50 hover:bg-white/[0.02]">
                         <TableCell className="font-medium whitespace-nowrap">
-                          {safeFormat(record.date, "PPP")}
+                          {formatDate(record.date)}
                         </TableCell>
                         <TableCell className="font-bold text-foreground">
                           {record.userName}
@@ -441,7 +433,7 @@ const Employees = () => {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-xs whitespace-nowrap">
-                          {record.timeIn ? safeFormat(record.timeIn, "hh:mm a") : "—"}
+                          {record.timeIn ? formatDate(record.timeIn) : "—"}
                         </TableCell>
                       </TableRow>
                     ))

@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { formatDate } from "./dateUtils";
 
 export const generateInvoicePDF = (invoice: any) => {
     if (!invoice) return;
@@ -51,7 +52,7 @@ export const generateInvoicePDF = (invoice: any) => {
 
     doc.setFont("helvetica", "normal");
     doc.text(`No: ${invoice.number || 'N/A'}`, 20, 78);
-    doc.text(`Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString('en-IN') : 'N/A'}`, 20, 83);
+    doc.text(`Date: ${formatDate(invoice.date)}`, 20, 83);
 
     const statusText = (invoice.status || 'PAID').toUpperCase();
     doc.setFont("helvetica", "bold");

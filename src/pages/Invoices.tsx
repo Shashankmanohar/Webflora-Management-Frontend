@@ -44,6 +44,8 @@ import { useProjects } from "@/hooks/useProjects";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { generateInvoicePDF } from "@/utils/pdfGenerator";
+import { formatDate } from "@/utils/dateUtils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -365,7 +367,7 @@ const Invoices = () => {
                     <TableCell className="font-medium">{invoice.number}</TableCell>
                     <TableCell>{invoice.clientName}</TableCell>
                     <TableCell>{invoice.projectName}</TableCell>
-                    <TableCell>{new Date(invoice.date).toLocaleDateString('en-IN')}</TableCell>
+                    <TableCell>{formatDate(invoice.date)}</TableCell>
                     <TableCell className="font-medium text-muted-foreground">{formatCurrency(invoice.total)}</TableCell>
                     <TableCell className="font-bold text-primary">{formatCurrency(invoice.grandTotal)}</TableCell>
                     <TableCell>
@@ -531,11 +533,10 @@ const Invoices = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="date">Date</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  <DatePicker 
+                    date={formData.date} 
+                    setDate={(v) => setFormData({ ...formData, date: v })} 
+                    placeholder="Select date"
                   />
                 </div>
               </div>
@@ -777,12 +778,10 @@ const Invoices = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-date">Date *</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
+                <DatePicker 
+                  date={formData.date} 
+                  setDate={(v) => setFormData({ ...formData, date: v })} 
+                  placeholder="Select date"
                 />
               </div>
             </div>
@@ -1000,7 +999,7 @@ const Invoices = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Date</Label>
-                  <p className="text-foreground mt-1">{new Date(selectedInvoice.date).toLocaleDateString('en-IN')}</p>
+                  <p className="text-foreground mt-1">{formatDate(selectedInvoice.date)}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Payment Method</Label>

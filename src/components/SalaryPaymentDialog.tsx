@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useAddSalaryPayment } from "@/hooks/useSalary";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface SalaryPaymentDialogProps {
     isOpen: boolean;
@@ -118,12 +119,10 @@ const SalaryPaymentDialog = ({
 
                     <div className="space-y-2">
                         <Label htmlFor="paymentDate">Payment Date *</Label>
-                        <Input
-                            id="paymentDate"
-                            type="date"
-                            value={paymentDate}
-                            onChange={(e) => setPaymentDate(e.target.value)}
-                            required
+                        <DatePicker 
+                            date={paymentDate} 
+                            setDate={setPaymentDate} 
+                            placeholder="Select payment date"
                         />
                     </div>
 

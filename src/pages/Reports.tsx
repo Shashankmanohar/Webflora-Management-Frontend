@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { useSalaryStats } from "@/hooks/useSalary";
 import { reportApi } from "@/services/api/reports";
+import { format } from "date-fns";
 import { Download, FileText, Calendar as CalendarIcon, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -105,7 +106,7 @@ const Reports = () => {
             className="rounded-xl border-border/50 font-bold text-xs"
             onClick={async () => {
               const data = await reportApi.getAttendance();
-              reportApi.downloadCSV(data, `Attendance_Report_${new Date().toLocaleDateString()}.csv`);
+              reportApi.downloadCSV(data, `Attendance_Report_${format(new Date(), "dd-MM-yyyy")}.csv`);
             }}
           >
             <CalendarIcon className="w-4 h-4 mr-2 text-primary" />
@@ -116,7 +117,7 @@ const Reports = () => {
             className="rounded-xl border-border/50 font-bold text-xs"
             onClick={async () => {
               const data = await reportApi.getSalary();
-              reportApi.downloadCSV(data, `Salary_Report_${new Date().toLocaleDateString()}.csv`);
+              reportApi.downloadCSV(data, `Salary_Report_${format(new Date(), "dd-MM-yyyy")}.csv`);
             }}
           >
             <Banknote className="w-4 h-4 mr-2 text-success" />

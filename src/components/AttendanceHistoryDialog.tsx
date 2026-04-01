@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAllAttendance, useAttendance } from "@/hooks/useAttendance";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { formatDate } from "@/utils/dateUtils";
 
 interface AttendanceHistoryDialogProps {
     isOpen: boolean;
@@ -39,15 +39,7 @@ const AttendanceHistoryDialog = ({
 
     const { data: attendance = [], isLoading } = isPersonal ? personalAttendance : specificAttendance;
 
-    const safeFormat = (dateStr: string, formatStr: string) => {
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return "Invalid Date";
-            return format(date, formatStr);
-        } catch (e) {
-            return "Invalid Date";
-        }
-    };
+    // Used central formatDate utility
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -83,7 +75,7 @@ const AttendanceHistoryDialog = ({
                                     {attendance.map((record: any) => (
                                         <TableRow key={record._id || record.id} className="border-border/50 hover:bg-white/[0.02]">
                                             <TableCell className="font-medium">
-                                                {safeFormat(record.date, "PPP")}
+                                                {formatDate(record.date)}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge
@@ -97,7 +89,7 @@ const AttendanceHistoryDialog = ({
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="font-mono text-xs">
-                                                {record.timeIn ? safeFormat(record.timeIn, "hh:mm a") : "—"}
+                                                {record.timeIn ? formatDate(record.timeIn) : "—"}
                                             </TableCell>
                                         </TableRow>
                                     ))}

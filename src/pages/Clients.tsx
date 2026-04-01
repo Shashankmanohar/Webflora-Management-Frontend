@@ -75,7 +75,7 @@ const Clients = () => {
   const filteredClients = clients.filter(
     (c: any) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.company.toLowerCase().includes(search.toLowerCase())
+      (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
   );
 
   const handleCreateClient = async (e: React.FormEvent) => {
@@ -102,9 +102,9 @@ const Clients = () => {
   const handleEditClick = (client: any) => {
     setFormData({
       clientName: client.name,
-      email: client.email,
-      contactNumber: client.phone,
-      address: client.address,
+      email: client.email || "",
+      contactNumber: client.phone || "",
+      address: client.address || "",
       referenceNo: client.referenceNo || "",
     });
     setSelectedClient(client);
@@ -283,25 +283,38 @@ const Clients = () => {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="contactNumber">Contact Number *</Label>
+              <Input
+                id="contactNumber"
+                value={formData.contactNumber}
+                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                placeholder="Enter contact number"
+                required
+              />
+            </div>
+
             <div className="space-y-4 pt-2">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="client@example.com"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Address *</Label>
                 <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="City, State"
+                  required
                 />
               </div>
 

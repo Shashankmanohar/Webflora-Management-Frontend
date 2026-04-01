@@ -44,6 +44,8 @@ import { useInterns } from "@/hooks/useInterns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDate } from "@/utils/dateUtils";
+import { DatePicker } from "@/components/ui/date-picker";
 
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -231,8 +233,8 @@ const Handovers = () => {
                                                 }
                                             </span>
                                         </TableCell>
-                                        <TableCell>{new Date(handover.handoverDate).toLocaleDateString('en-IN')}</TableCell>
-                                        <TableCell>{handover.deadline ? new Date(handover.deadline).toLocaleDateString('en-IN') : 'N/A'}</TableCell>
+                                        <TableCell>{formatDate(handover.handoverDate)}</TableCell>
+                                        <TableCell>{formatDate(handover.deadline)}</TableCell>
                                         <TableCell>
                                             <StatusBadge status={handover.status} />
                                         </TableCell>
@@ -317,11 +319,19 @@ const Handovers = () => {
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <Label>Handover Date</Label>
-                                <Input type="date" value={formData.handoverDate} onChange={(e) => setFormData({ ...formData, handoverDate: e.target.value })} />
+                                <DatePicker 
+                                    date={formData.handoverDate} 
+                                    setDate={(v) => setFormData({ ...formData, handoverDate: v })} 
+                                    placeholder="Select handover date"
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label>Deadline</Label>
-                                <Input type="date" value={formData.deadline} onChange={(e) => setFormData({ ...formData, deadline: e.target.value })} />
+                                <DatePicker 
+                                    date={formData.deadline} 
+                                    setDate={(v) => setFormData({ ...formData, deadline: v })} 
+                                    placeholder="Set deadline (optional)"
+                                />
                             </div>
                         </div>
 

@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search, Banknote, TrendingUp, Calendar, PieChart as PieChartIcon } from "lucide-react";
 import { useAllSalaries, useSalaryStats } from "@/hooks/useSalary";
-import { format } from "date-fns";
+import { formatDate } from "@/utils/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,15 +46,7 @@ const Salaries = () => {
         s.remarks?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const safeFormat = (dateStr: string, formatStr: string) => {
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return "Invalid Date";
-            return format(date, formatStr);
-        } catch (e) {
-            return "Invalid Date";
-        }
-    };
+    // Replaced safeFormat logic with central utility usage in the table
 
     const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -170,7 +162,7 @@ const Salaries = () => {
                                                     {record.month} {record.year}
                                                 </TableCell>
                                                 <TableCell className="text-center text-muted-foreground font-medium">
-                                                    {safeFormat(record.paymentDate, "dd MMM yyyy")}
+                                                    {formatDate(record.paymentDate)}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-black bg-success/10 text-success border border-success/20">

@@ -26,6 +26,7 @@ import { useCommunications, useCreateCommunication, useReplyCommunication, useDe
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatDate } from "@/utils/dateUtils";
 
 const Communications = () => {
     const { user } = useAuth();
@@ -225,7 +226,7 @@ const Communications = () => {
                                         </>
                                     )}
                                     <span className="ml-auto text-xs text-muted-foreground">
-                                        {new Date(comm.createdAt).toLocaleDateString('en-IN')}
+                                        {formatDate(comm.createdAt)}
                                     </span>
                                 </div>
                             </div>
