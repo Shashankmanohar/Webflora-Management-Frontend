@@ -2,8 +2,9 @@ import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff, ScrollText } from "lucide-react";
 import AttendanceHistoryDialog from "@/components/AttendanceHistoryDialog";
+import ActivityHistoryDialog from "@/components/ActivityHistoryDialog";
 import SalaryPaymentDialog from "@/components/SalaryPaymentDialog";
 import SalaryHistoryDialog from "@/components/SalaryHistoryDialog";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,11 @@ const Employees = () => {
   const [isSalaryPaymentOpen, setIsSalaryPaymentOpen] = useState(false);
   const [isSalaryHistoryOpen, setIsSalaryHistoryOpen] = useState(false);
   const [salaryPayee, setSalaryPayee] = useState<any | null>(null);
+
+  // Activity History State
+  const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
+  const [activityEmployeeId, setActivityEmployeeId] = useState<string | null>(null);
+  const [activityEmployeeName, setActivityEmployeeName] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -142,6 +148,12 @@ const Employees = () => {
     setAttendanceEmployeeId(employee.id || employee._id);
     setAttendanceEmployeeName(employee.name);
     setIsAttendanceDialogOpen(true);
+  };
+
+  const handleActivityClick = (employee: any) => {
+    setActivityEmployeeId(employee.id || employee._id);
+    setActivityEmployeeName(employee.name);
+    setIsActivityDialogOpen(true);
   };
 
   const handleSalaryPaymentClick = (employee: any) => {
@@ -348,6 +360,15 @@ const Employees = () => {
                           title="Attendance History"
                         >
                           <History className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="px-2"
+                          onClick={() => handleActivityClick(employee)}
+                          title="Activity Log"
+                        >
+                          <ScrollText className="w-3.5 h-3.5" />
                         </Button>
                         <Button
                           size="sm"
@@ -668,6 +689,13 @@ const Employees = () => {
         onOpenChange={setIsAttendanceDialogOpen}
         userId={attendanceEmployeeId || undefined}
         userName={attendanceEmployeeName}
+      />
+
+      <ActivityHistoryDialog
+        isOpen={isActivityDialogOpen}
+        onOpenChange={setIsActivityDialogOpen}
+        userId={activityEmployeeId || undefined}
+        userName={activityEmployeeName}
       />
 
       {salaryPayee && (

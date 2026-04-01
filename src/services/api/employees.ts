@@ -39,4 +39,8 @@ export const employeeApi = {
         const response = await axiosInstance.post(API_ENDPOINTS.EMPLOYEE_LOGIN, credentials);
         return response.data;
     },
+    list: async () => {
+        const response = await axiosInstance.get<{ employees: any[] }>('/api/employee/list');
+        return response.data.employees;
+    },
 };

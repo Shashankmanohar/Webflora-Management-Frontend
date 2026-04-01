@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Banknote,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,19 +26,40 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/clients", icon: Users, label: "Clients" },
-  { to: "/salaries", icon: Banknote, label: "Salaries" },
-  { to: "/invoices", icon: FileText, label: "Invoices" },
-  { to: "/projects", icon: FolderKanban, label: "Projects" },
-  { to: "/handovers", icon: Briefcase, label: "Handovers" },
-  { to: "/employees", icon: UserCog, label: "Employees" },
-  { to: "/interns", icon: GraduationCap, label: "Interns" },
-  { to: "/notices", icon: Bell, label: "Notices" },
-  { to: "/communications", icon: MessageSquareWarning, label: "Communications" },
-  { to: "/reports", icon: BarChart3, label: "Reports" },
-  { to: "/settings", icon: Settings, label: "Settings" },
+const navigation = [
+  {
+    title: "Core",
+    items: [
+      { to: "/", icon: LayoutDashboard, label: "Dashboard" },
+      { to: "/projects", icon: FolderKanban, label: "Projects" },
+      { to: "/invoices", icon: FileText, label: "Invoices" },
+      { to: "/clients", icon: Users, label: "Clients" },
+    ]
+  },
+  {
+    title: "Personnel",
+    items: [
+      { to: "/employees", icon: UserCog, label: "Employees" },
+      { to: "/interns", icon: GraduationCap, label: "Interns" },
+      { to: "/salaries", icon: Banknote, label: "Salaries" },
+      { to: "/handovers", icon: Briefcase, label: "Handovers" },
+    ]
+  },
+  {
+    title: "Communication",
+    items: [
+      { to: "/notices", icon: Bell, label: "Notices" },
+      { to: "/communications", icon: MessageSquareWarning, label: "Communications" },
+    ]
+  },
+  {
+    title: "Insights",
+    items: [
+      { to: "/activity", icon: History, label: "Activity Logs" },
+      { to: "/reports", icon: BarChart3, label: "Reports" },
+      { to: "/settings", icon: Settings, label: "Settings" },
+    ]
+  }
 ];
 
 interface AppSidebarProps {
@@ -90,45 +112,59 @@ const SidebarContent = ({
     </div>
 
     {/* Navigation */}
-    <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar relative z-10">
+    <nav className="flex-1 py-6 px-3 space-y-8 overflow-y-auto custom-scrollbar relative z-10">
       <AnimatePresence>
-        {navItems.map((item, index) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <motion.div
-              key={item.to}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.03, duration: 0.4, ease: "easeOut" }}
-            >
-              <NavLink
-                to={item.to}
-                className={cn(
-                  "sidebar-item group",
-                  isActive ? "sidebar-item-active" : "sidebar-item-inactive"
-                )}
-              >
-                {isActive && (
+        {navigation.map((section, sIdx) => (
+          <div key={section.title} className="space-y-2">
+            {(!collapsed || isMobile) && (
+              <h4 className="px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50 mb-3">
+                {section.title}
+              </h4>
+            )}
+            <div className="space-y-1">
+              {section.items.map((item, index) => {
+                const isActive = location.pathname === item.to;
+                return (
                   <motion.div
-                    layoutId="sidebar-active"
-                    className="absolute inset-0 bg-primary/10 rounded-xl border border-primary/20"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <item.icon className={cn(
-                  "w-[18px] h-[18px] shrink-0 transition-all duration-300 relative z-20",
-                  isActive ? "text-primary scale-110" : "group-hover:text-foreground group-hover:scale-110"
-                )} />
-                {(!collapsed || isMobile) && (
-                  <span className="relative z-20 truncate tracking-tight">{item.label}</span>
-                )}
-                {isActive && !collapsed && (
-                  <div className="absolute right-3 w-1 h-1 rounded-full bg-primary premium-glow relative z-20" />
-                )}
-              </NavLink>
-            </motion.div>
-          );
-        })}
+                    key={item.to}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (sIdx * 4 + index) * 0.03, duration: 0.4, ease: "easeOut" }}
+                  >
+                    <NavLink
+                      to={item.to}
+                      className={cn(
+                        "sidebar-item group",
+                        isActive ? "sidebar-item-active" : "sidebar-item-inactive"
+                      )}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="sidebar-active"
+                          className="absolute inset-0 bg-primary/10 rounded-xl border border-primary/20 shadow-[0_0_20px_rgba(var(--primary),0.05)]"
+                          transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                        />
+                      )}
+                      <item.icon className={cn(
+                        "w-[18px] h-[18px] shrink-0 transition-all duration-300 relative z-20",
+                        isActive ? "text-primary scale-110" : "group-hover:text-foreground group-hover:scale-110"
+                      )} />
+                      {(!collapsed || isMobile) && (
+                        <span className="relative z-20 truncate tracking-tight font-medium">{item.label}</span>
+                      )}
+                      {isActive && !collapsed && (
+                        <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-primary premium-glow relative z-20" />
+                      )}
+                    </NavLink>
+                  </motion.div>
+                );
+              })}
+            </div>
+            {sIdx < navigation.length - 1 && collapsed && !isMobile && (
+              <div className="mx-3 h-px bg-white/5 my-4" />
+            )}
+          </div>
+        ))}
       </AnimatePresence>
     </nav>
 

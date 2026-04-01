@@ -65,6 +65,10 @@ export const internApi = {
         const response = await axiosInstance.delete(`/api/intern/delete/${id}`);
         return response.data;
     },
+    list: async () => {
+        const response = await axiosInstance.get<{ interns: any[] }>('/api/intern/list');
+        return response.data.interns;
+    },
 };
 
 // Communications API

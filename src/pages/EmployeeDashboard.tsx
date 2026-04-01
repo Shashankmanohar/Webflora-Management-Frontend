@@ -19,6 +19,7 @@ import AttendanceHistoryDialog from "@/components/AttendanceHistoryDialog";
 import { useAttendance, useMarkAttendance } from "@/hooks/useAttendance";
 import { handoverApi } from "@/services/api/handover";
 import { useQuery } from "@tanstack/react-query";
+import ActivityLogSection from "@/components/ActivityLogSection";
 
 const EmployeeDashboard = () => {
     const { user } = useAuth();
@@ -199,6 +200,20 @@ const EmployeeDashboard = () => {
                             </div>
                         </div>
                     </motion.div>
+                </div>
+
+                {/* Activity Logging Section */}
+                <div className="pt-8">
+                    <div className="flex items-center space-x-3 mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                            <Clock className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-foreground tracking-tight">Today's Activity Log</h2>
+                            <p className="text-muted-foreground text-sm font-medium italic">What have you done today? Log it here.</p>
+                        </div>
+                    </div>
+                    <ActivityLogSection />
                 </div>
             </div>
 

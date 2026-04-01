@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyOTP from "./pages/VerifyOTP";
 import ResetPassword from "./pages/ResetPassword";
+import AdminActivityView from "./pages/AdminActivityView";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
                       <Route path="/communications" element={<Communications />} />
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/settings" element={<Settings />} />
+                      <Route path="/activity" element={<AdminActivityView />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </RoleBasedLayout>

@@ -13,6 +13,10 @@ import {
   Cell,
 } from "recharts";
 import { useSalaryStats } from "@/hooks/useSalary";
+import { reportApi } from "@/services/api/reports";
+import { Download, FileText, Calendar as CalendarIcon, Banknote } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 
 const formatCurrency = (value: number) => {
   if (value >= 100000) return `₹${(value / 100000).toFixed(1)}L`;
@@ -69,6 +73,8 @@ const Reports = () => {
   const { data: salaryStats = [] } = useSalaryStats();
 
   // Combine monthly data for chart
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
   const salaryChartData = salaryStats.reduce((acc: any[], stat) => {
     const label = `${stat._id.month} ${stat._id.year}`;
     const existing = acc.find(d => d.name === label);
@@ -89,11 +95,35 @@ const Reports = () => {
     return acc;
   }, []).sort((a, b) => (a.rawYear !== b.rawYear ? a.rawYear - b.rawYear : months.indexOf(a.rawMonth) - months.indexOf(b.rawMonth)));
 
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
   return (
     <div>
-      <PageHeader title="Reports" subtitle="Business intelligence & analytics" />
+      <div className="flex items-center justify-between px-6 py-4">
+        <PageHeader title="Reports" subtitle="Business intelligence & analytics" />
+        <div className="flex space-x-3">
+          <Button
+            variant="outline"
+            className="rounded-xl border-border/50 font-bold text-xs"
+            onClick={async () => {
+              const data = await reportApi.getAttendance();
+              reportApi.downloadCSV(data, `Attendance_Report_${new Date().toLocaleDateString()}.csv`);
+            }}
+          >
+            <CalendarIcon className="w-4 h-4 mr-2 text-primary" />
+            Attendance CSV
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-xl border-border/50 font-bold text-xs"
+            onClick={async () => {
+              const data = await reportApi.getSalary();
+              reportApi.downloadCSV(data, `Salary_Report_${new Date().toLocaleDateString()}.csv`);
+            }}
+          >
+            <Banknote className="w-4 h-4 mr-2 text-success" />
+            Salary CSV
+          </Button>
+        </div>
+      </div>
 
       <div className="p-6 space-y-6">
         {/* Row 1 */}

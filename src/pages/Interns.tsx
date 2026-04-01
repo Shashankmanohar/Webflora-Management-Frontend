@@ -2,9 +2,10 @@ import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import StatusBadge from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Edit, Trash2, History, Banknote, Eye, EyeOff, ScrollText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import AttendanceHistoryDialog from "@/components/AttendanceHistoryDialog";
+import ActivityHistoryDialog from "@/components/ActivityHistoryDialog";
 import SalaryPaymentDialog from "@/components/SalaryPaymentDialog";
 import SalaryHistoryDialog from "@/components/SalaryHistoryDialog";
 import {
@@ -58,6 +59,11 @@ const Interns = () => {
     const [isSalaryPaymentOpen, setIsSalaryPaymentOpen] = useState(false);
     const [isSalaryHistoryOpen, setIsSalaryHistoryOpen] = useState(false);
     const [salaryPayee, setSalaryPayee] = useState<any | null>(null);
+
+    // Activity History State
+    const [isActivityDialogOpen, setIsActivityDialogOpen] = useState(false);
+    const [activityInternId, setActivityInternId] = useState<string | null>(null);
+    const [activityInternName, setActivityInternName] = useState<string>("");
 
     const [formData, setFormData] = useState({
         name: "",
@@ -126,6 +132,12 @@ const Interns = () => {
         setAttendanceInternId(intern._id || intern.id);
         setAttendanceInternName(intern.name);
         setIsAttendanceDialogOpen(true);
+    };
+
+    const handleActivityClick = (intern: any) => {
+        setActivityInternId(intern._id || intern.id);
+        setActivityInternName(intern.name);
+        setIsActivityDialogOpen(true);
     };
 
     const handleSalaryPaymentClick = (intern: any) => {
@@ -325,6 +337,15 @@ const Interns = () => {
                                                     title="Attendance History"
                                                 >
                                                     <History className="w-3.5 h-3.5" />
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="px-2"
+                                                    onClick={() => handleActivityClick(intern)}
+                                                    title="Activity Log"
+                                                >
+                                                    <ScrollText className="w-3.5 h-3.5" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -575,6 +596,13 @@ const Interns = () => {
                 onOpenChange={setIsAttendanceDialogOpen}
                 userId={attendanceInternId || undefined}
                 userName={attendanceInternName}
+            />
+
+            <ActivityHistoryDialog
+                isOpen={isActivityDialogOpen}
+                onOpenChange={setIsActivityDialogOpen}
+                userId={activityInternId || undefined}
+                userName={activityInternName}
             />
 
             {salaryPayee && (
