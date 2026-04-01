@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,7 @@ import {
 import { format } from "date-fns";
 import { formatDate } from "@/utils/dateUtils";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Plus, CalendarIcon, History, Pencil, Trash2, Save, X } from "lucide-react";
+import { Loader2, Plus, CalendarIcon, History, Pencil, Trash2, Save, X, Image as ImageIcon, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,6 +35,15 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
     const [fetching, setFetching] = useState(true);
     const { toast } = useToast();
     const { user: authUser } = useAuth();
+    
+    // Image states
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    const [editImage, setEditImage] = useState<File | null>(null);
+    const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+    const editFileInputRef = useRef<HTMLInputElement>(null);
 
     // Project selection state
     const [assignedProjects, setAssignedProjects] = useState<any[]>([]);
@@ -73,6 +82,31 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
         }
     }, [targetUserId]);
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, forEdit = false) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (forEdit) {
+                setEditImage(file);
+                setEditImagePreview(URL.createObjectURL(file));
+            } else {
+                setSelectedImage(file);
+                setImagePreview(URL.createObjectURL(file));
+            }
+        }
+    };
+
+    const clearImage = (forEdit = false) => {
+        if (forEdit) {
+            setEditImage(null);
+            setEditImagePreview(null);
+            if (editFileInputRef.current) editFileInputRef.current.value = "";
+        } else {
+            setSelectedImage(null);
+            setImagePreview(null);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
     const handleLogActivity = async () => {
         if (!date || !content.trim()) {
             toast({
@@ -88,13 +122,15 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
             await activityApi.log({
                 date: format(date, "yyyy-MM-dd"),
                 content,
-                projectId: selectedProjectId || undefined
+                projectId: selectedProjectId || undefined,
+                image: selectedImage || undefined
             });
             toast({
                 title: "Success",
                 description: "Activity logged successfully!"
             });
             setContent("");
+            clearImage();
             fetchActivities();
         } catch (error: any) {
             toast({
@@ -112,12 +148,16 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
 
         try {
             setLoading(true);
-            await activityApi.update(id, { content: editContent });
+            await activityApi.update(id, { 
+                content: editContent,
+                image: editImage || undefined 
+            });
             toast({
                 title: "Updated",
                 description: "Activity updated successfully!"
             });
             setIsEditing(false);
+            clearImage(true);
             fetchActivities();
         } catch (error: any) {
             toast({
@@ -221,6 +261,41 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
                                             onChange={(e) => setEditContent(e.target.value)}
                                             className="min-h-[150px] rounded-3xl resize-none focus-visible:ring-primary border-border/50"
                                         />
+                                        
+                                        {/* Edit Image Upload */}
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Update Image (Optional)</label>
+                                            <div className="flex items-center space-x-3">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    ref={editFileInputRef}
+                                                    onChange={(e) => handleImageChange(e, true)}
+                                                />
+                                                <Button
+                                                    variant="outline"
+                                                    type="button"
+                                                    className="h-12 rounded-2xl border-border/50 bg-secondary/30"
+                                                    onClick={() => editFileInputRef.current?.click()}
+                                                >
+                                                    <Camera className="w-4 h-4 mr-2" />
+                                                    Change Photo
+                                                </Button>
+                                                {editImagePreview && (
+                                                    <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/50">
+                                                        <img src={editImagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                        <button 
+                                                            onClick={() => clearImage(true)}
+                                                            className="absolute top-0 right-0 bg-destructive text-white p-0.5 rounded-bl-lg"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
                                         <div className="flex space-x-3">
                                             <Button
                                                 className="flex-1 h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
@@ -252,11 +327,36 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="p-6 rounded-3xl bg-secondary/50 border border-border/50 min-h-[150px]">
+                                        
+                                        {/* Activity Content */}
+                                        <div className="p-6 rounded-3xl bg-secondary/50 border border-border/50 min-h-[100px]">
                                             <p className="text-foreground font-medium leading-relaxed whitespace-pre-wrap">
                                                 {selectedActivity.content}
                                             </p>
                                         </div>
+
+                                        {/* Activity Image Display */}
+                                        {selectedActivity.image && (
+                                            <div className="mt-4 rounded-[2rem] overflow-hidden border border-border/50 bg-secondary/30 aspect-video relative group">
+                                                <img 
+                                                    src={selectedActivity.image} 
+                                                    alt="Activity attachment" 
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <a 
+                                                        href={selectedActivity.image} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="bg-white/20 backdrop-blur-md text-white px-4 py-2 rounded-xl flex items-center space-x-2 font-bold"
+                                                    >
+                                                        <ImageIcon className="w-4 h-4" />
+                                                        <span>View Full Size</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         {!isAdminView && (
                                             <div className="flex space-x-3">
                                                 <Button
@@ -264,6 +364,7 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
                                                     className="flex-1 h-12 rounded-2xl border-border/50 font-bold hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-all"
                                                     onClick={() => {
                                                         setEditContent(selectedActivity.content);
+                                                        setEditImagePreview(selectedActivity.image || null);
                                                         setIsEditing(true);
                                                     }}
                                                 >
@@ -324,14 +425,53 @@ const ActivityLogSection = ({ isAdminView = false, targetUserId }: ActivityLogSe
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <Textarea
-                                    placeholder="What have you done today? Break down your tasks..."
-                                    className="min-h-[150px] rounded-3xl resize-none focus-visible:ring-primary border-border/50"
-                                    value={content}
-                                    onChange={(e) => setContent(e.target.value)}
-                                />
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">What did you do?</label>
+                                    <Textarea
+                                        placeholder="What have you done today? Break down your tasks..."
+                                        className="min-h-[150px] rounded-3xl resize-none focus-visible:ring-primary border-border/50"
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                    />
+                                </div>
+
+                                {/* Image Upload Field */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-2">Attach Image (Optional)</label>
+                                    <div className="flex items-center space-x-4">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            ref={fileInputRef}
+                                            onChange={(e) => handleImageChange(e)}
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            className="h-14 rounded-2xl border-border/50 bg-secondary/30 flex-1 border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all"
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            <ImageIcon className="w-5 h-5 mr-2 text-primary" />
+                                            <span>{selectedImage ? "Change Image" : "Upload Screenshot/Photo"}</span>
+                                        </Button>
+                                        
+                                        {imagePreview && (
+                                            <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-primary/20 shadow-lg group">
+                                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                <button 
+                                                    onClick={() => clearImage()}
+                                                    className="absolute inset-0 bg-destructive/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <Button
-                                    className="w-full h-12 rounded-2xl font-bold shadow-lg shadow-primary/20"
+                                    className="w-full h-14 rounded-2xl font-bold shadow-lg shadow-primary/20 text-base mt-2"
                                     onClick={handleLogActivity}
                                     disabled={loading || !date}
                                 >
