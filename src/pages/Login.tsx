@@ -15,7 +15,6 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [role, setRole] = useState<'admin' | 'employee' | 'intern'>('admin');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -31,20 +30,16 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            let endpoint: string = API_ENDPOINTS.ADMIN_LOGIN;
-            if (role === 'employee') endpoint = API_ENDPOINTS.EMPLOYEE_LOGIN;
-            if (role === 'intern') endpoint = API_ENDPOINTS.INTERN_LOGIN;
-
             const response = await axiosInstance.post<LoginResponse>(
-                endpoint,
+                API_ENDPOINTS.AUTH_LOGIN,
                 { email, password }
             );
+            
+            const { token, user: userData, admin, employee, intern } = response.data;
+            const finalUser = userData || admin || employee || intern;
 
-            const { token, admin, employee, intern } = response.data;
-            const userData = admin || employee || intern;
-
-            if (token && userData) {
-                login(token, userData);
+            if (token && finalUser) {
+                login(token, finalUser);
                 toast.success('Login successful!');
                 navigate('/');
             } else {
@@ -72,21 +67,6 @@ const Login = () => {
                     <CardDescription className="text-center text-muted-foreground">
                         Sign in to your Webflora account
                     </CardDescription>
-
-                    <div className="grid grid-cols-3 gap-2 mt-4">
-                        {(['admin', 'employee', 'intern'] as const).map((r) => (
-                            <Button
-                                key={r}
-                                variant={role === r ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setRole(r)}
-                                className="capitalize text-[11px] h-8 font-bold"
-                                type="button"
-                            >
-                                {r}
-                            </Button>
-                        ))}
-                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-5">
@@ -95,7 +75,7 @@ const Login = () => {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder={`your.${role}@webflora.com`}
+                                placeholder="your.name@webflora.tech"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 disabled={isLoading}
@@ -104,7 +84,7 @@ const Login = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password" title={`Sign in as ${role}`} className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
+                            <Label htmlFor="password" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</Label>
                             <div className="relative">
                                 <Input
                                     id="password"
@@ -140,7 +120,7 @@ const Login = () => {
                             </button>
                         </div>
                         <Button type="submit" className="w-full premium-gradient font-bold" disabled={isLoading}>
-                            {isLoading ? 'Signing in...' : `Sign In as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
+                            {isLoading ? 'Signing in...' : 'Sign In Now'}
                         </Button>
                     </form>
                 </CardContent>

@@ -28,6 +28,7 @@ export interface AdminResponse {
 export interface LoginResponse {
     message: string;
     token: string;
+    user?: AuthUser;
     admin?: AdminResponse;
     employee?: EmployeeResponse;
     intern?: InternResponse;

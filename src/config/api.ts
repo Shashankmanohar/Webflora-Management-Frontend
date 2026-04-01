@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
     HANDOVER_DELETE: (id: string) => `/api/handover/delete/${id}`,
 
     // Auth
+    AUTH_LOGIN: '/api/auth/login',
     AUTH_FORGOT_PASSWORD: '/api/auth/forgot-password',
     AUTH_VERIFY_OTP: '/api/auth/verify-otp',
     AUTH_RESET_PASSWORD: '/api/auth/reset-password',
