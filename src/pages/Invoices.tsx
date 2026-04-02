@@ -46,6 +46,9 @@ import { useToast } from "@/hooks/use-toast";
 import { generateInvoicePDF } from "@/utils/pdfGenerator";
 import { formatDate } from "@/utils/dateUtils";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
@@ -72,7 +75,8 @@ const Invoices = () => {
 
   const [formData, setFormData] = useState<{
     clientId: string;
-    projectId: string;
+    projectIds: string[];
+    selectedDues: string[];
     referenceNo: string;
     invoiceNo: string;
     amount: string;
@@ -84,7 +88,8 @@ const Invoices = () => {
     items: { service: string; units: string; price: number }[];
   }>({
     clientId: "",
-    projectId: "",
+    projectIds: [],
+    selectedDues: [],
     referenceNo: "",
     invoiceNo: "",
     amount: "",
@@ -124,11 +129,13 @@ const Invoices = () => {
       : Number(formData.amount);
 
     // Frontend budget validation
-    const project = projects.find((p: any) => p.id === formData.projectId);
-    if (project && amountNum > (project.dueAmount || 0)) {
+    const selectedProjects = projects.filter((p: any) => formData.projectIds.includes(p.id));
+    const totalBudget = selectedProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
+    
+    if (amountNum > totalBudget) {
       toast({
         title: "Budget Exceeded",
-        description: `This invoice amount exceeds the remaining project budget (₹${project.dueAmount}).`,
+        description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget}).`,
         variant: "destructive",
       });
       return;
@@ -137,7 +144,8 @@ const Invoices = () => {
     try {
       await createInvoice.mutateAsync({
         clientId: formData.clientId,
-        projectId: formData.projectId,
+        projectIds: formData.projectIds,
+        selectedDues: formData.selectedDues,
         referenceNo: formData.referenceNo,
         invoiceNo: formData.invoiceNo,
         amount: amountNum,
@@ -151,7 +159,8 @@ const Invoices = () => {
       setIsCreateDialogOpen(false);
       setFormData({
         clientId: "",
-        projectId: "",
+        projectIds: [],
+        selectedDues: [],
         referenceNo: "",
         invoiceNo: "",
         amount: "",
@@ -174,7 +183,8 @@ const Invoices = () => {
   const handleEditClick = (invoice: any) => {
     setFormData({
       clientId: invoice.clientId || "",
-      projectId: invoice.projectId || "",
+      projectIds: Array.isArray(invoice.projectIds) ? invoice.projectIds : (invoice.projectId ? [invoice.projectId] : []),
+      selectedDues: invoice.selectedDues || [],
       referenceNo: invoice.referenceNo || "",
       invoiceNo: invoice.number || "",
       amount: invoice.amount?.toString() || "",
@@ -196,21 +206,20 @@ const Invoices = () => {
       ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0)
       : Number(formData.amount);
 
-    const project = projects.find((p: any) => p.id === formData.projectId);
-    if (project) {
-      const originalAmount = Number(selectedInvoice.amount) || 0;
-      const budgetAvailable = formData.projectId === selectedInvoice.projectId
-        ? (project.dueAmount || 0) + originalAmount
-        : (project.dueAmount || 0);
+    const selectedProjects = projects.filter((p: any) => formData.projectIds.includes(p.id));
+    const totalBudget = selectedProjects.reduce((sum: number, p: any) => {
+        const originalInvoiceFound = selectedInvoice.projectIds?.includes(p.id) || selectedInvoice.projectId === p.id;
+        const previousContribution = originalInvoiceFound ? Number(selectedInvoice.amount) : 0;
+        return sum + (p.dueAmount || 0) + previousContribution;
+    }, 0);
 
-      if (amountNum > budgetAvailable) {
+    if (amountNum > totalBudget) {
         toast({
-          title: "Budget Exceeded",
-          description: `This invoice amount exceeds the remaining project budget (₹${budgetAvailable}).`,
-          variant: "destructive",
+            title: "Budget Exceeded",
+            description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget}).`,
+            variant: "destructive",
         });
         return;
-      }
     }
 
     try {
@@ -218,7 +227,8 @@ const Invoices = () => {
         id: selectedInvoice.id,
         data: {
           clientId: formData.clientId,
-          projectId: formData.projectId,
+          projectIds: formData.projectIds,
+          selectedDues: formData.selectedDues,
           referenceNo: formData.referenceNo,
           invoiceNo: formData.invoiceNo,
           amount: amountNum,
@@ -234,7 +244,8 @@ const Invoices = () => {
       setSelectedInvoice(null);
       setFormData({
         clientId: "",
-        projectId: "",
+        projectIds: [],
+        selectedDues: [],
         referenceNo: "",
         invoiceNo: "",
         amount: "",
@@ -429,11 +440,18 @@ const Invoices = () => {
                   value={formData.clientId}
                   onValueChange={(value) => {
                     const client = clients.find((c: any) => c.id === value);
+                    // Filter projects for this client to get default dues
+                    const clientProjects = projects.filter((p: any) => p.clientId === value);
+                    const totalDue = clientProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
+                    const allProjectIds = clientProjects.map((p: any) => p.id);
+                    
                     setFormData({
                       ...formData,
                       clientId: value,
                       referenceNo: client?.referenceNo || "",
-                      previousDue: client?.totalDue || 0
+                      projectIds: [], // Reset selected projects
+                      selectedDues: allProjectIds, // Default to all dues included
+                      previousDue: totalDue
                     });
                   }}
                   required
@@ -459,35 +477,95 @@ const Invoices = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="project">Project *</Label>
-                <Select
-                  value={formData.projectId}
-                  onValueChange={(value) => setFormData({ ...formData, projectId: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects
-                      .filter((p: any) => p.clientId === formData.clientId || !formData.clientId)
-                      .map((project: any) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {formData.projectId && (
+                <Label>Projects *</Label>
+                <div className="border rounded-md p-2 bg-background/50">
+                  <ScrollArea className="h-[100px]">
+                    <div className="space-y-2 pr-4">
+                      {projects
+                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (p.dueAmount > 0 || formData.projectIds.includes(p.id)))
+                        .map((project: any) => (
+                          <div key={project.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`project-${project.id}`}
+                              checked={formData.projectIds.includes(project.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({ ...formData, projectIds: [...formData.projectIds, project.id] });
+                                } else {
+                                  setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`project-${project.id}`}
+                              className="text-sm font-medium leading-none cursor-pointer flex-1"
+                            >
+                              {project.name}
+                            </label>
+                            <span className="text-[10px] text-muted-foreground">
+                              Due: {formatCurrency(project.dueAmount)}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+                {formData.projectIds.length > 0 && (
                   <p className="text-[10px] font-medium text-muted-foreground mt-1 px-1 flex justify-between">
-                    <span>Remaining Budget:</span>
+                    <span>Combined Budget:</span>
                     <span className="text-primary font-bold">
-                      {formatCurrency(projects.find((p: any) => p.id === formData.projectId)?.dueAmount || 0)}
+                      {formatCurrency(projects
+                        .filter((p: any) => formData.projectIds.includes(p.id))
+                        .reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0)
+                      )}
                     </span>
                   </p>
                 )}
               </div>
             </div>
+
+            {formData.clientId && (
+              <div className="space-y-2 border-t pt-4">
+                <Label>Include Previous Dues From:</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                    {projects
+                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && p.dueAmount > 0)
+                        .map((p: any) => (
+                            <div key={p.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-accent/50 transition-colors">
+                                <Checkbox 
+                                    id={`due-${p.id}`}
+                                    checked={formData.selectedDues.includes(p.id)}
+                                    onCheckedChange={(checked) => {
+                                        let newDues = [...formData.selectedDues];
+                                        if (checked) {
+                                            newDues.push(p.id);
+                                        } else {
+                                            newDues = newDues.filter(id => id !== p.id);
+                                        }
+                                        
+                                        // Calculate new previousDue sum
+                                        const total = projects
+                                            .filter((proj: any) => newDues.includes(proj.id))
+                                            .reduce((sum: number, proj: any) => sum + (proj.dueAmount || 0), 0);
+                                            
+                                        setFormData({ ...formData, selectedDues: newDues, previousDue: total });
+                                    }}
+                                />
+                                <Label htmlFor={`due-${p.id}`} className="text-xs cursor-pointer flex-1 truncate">
+                                    {p.name}
+                                </Label>
+                                <span className="text-[10px] text-destructive font-bold">
+                                    {formatCurrency(p.dueAmount)}
+                                </span>
+                            </div>
+                        ))
+                    }
+                    {projects.filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id)).length === 0 && (
+                        <p className="text-[10px] text-muted-foreground italic col-span-2">No other outstanding projects found for this client.</p>
+                    )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -548,12 +626,12 @@ const Invoices = () => {
                       <History className="w-4 h-4 text-destructive" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Outstanding Balance</p>
+                      <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Selected Balance</p>
                       <p className="text-base font-bold text-destructive leading-tight">{formatCurrency(formData.previousDue)}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[9px] text-muted-foreground italic leading-tight">This will be added to the<br />Final Payable Amount</p>
+                    <p className="text-[9px] text-muted-foreground italic leading-tight">Included from {formData.selectedDues.length} projects</p>
                   </div>
                 </div>
               )}
@@ -704,11 +782,17 @@ const Invoices = () => {
                   value={formData.clientId}
                   onValueChange={(value) => {
                     const client = clients.find((c: any) => c.id === value);
+                    const clientProjects = projects.filter((p: any) => p.clientId === value);
+                    const totalDue = clientProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
+                    const allProjectIds = clientProjects.map((p: any) => p.id);
+
                     setFormData({
                       ...formData,
                       clientId: value,
                       referenceNo: client?.referenceNo || "",
-                      previousDue: client?.totalDue || 0
+                      projectIds: [], 
+                      selectedDues: allProjectIds,
+                      previousDue: totalDue
                     });
                   }}
                   required
@@ -734,38 +818,95 @@ const Invoices = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-project">Project *</Label>
-                <Select
-                  value={formData.projectId}
-                  onValueChange={(value) => setFormData({ ...formData, projectId: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects
-                      .filter((p: any) => p.clientId === formData.clientId || !formData.clientId)
-                      .map((project: any) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                {formData.projectId && (
+                <Label>Projects *</Label>
+                <div className="border rounded-md p-2 bg-background/50">
+                  <ScrollArea className="h-[100px]">
+                    <div className="space-y-2 pr-4">
+                      {projects
+                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (p.dueAmount > 0 || formData.projectIds.includes(p.id)))
+                        .map((project: any) => (
+                          <div key={project.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`edit-project-${project.id}`}
+                              checked={formData.projectIds.includes(project.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({ ...formData, projectIds: [...formData.projectIds, project.id] });
+                                } else {
+                                  setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`edit-project-${project.id}`}
+                              className="text-sm font-medium leading-none cursor-pointer flex-1"
+                            >
+                              {project.name}
+                            </label>
+                            <span className="text-[10px] text-muted-foreground">
+                              Due: {formatCurrency((project.dueAmount || 0) + (formData.projectIds.includes(project.id) && (selectedInvoice?.projectIds?.includes(project.id) || selectedInvoice?.projectId === project.id) ? Number(selectedInvoice.amount) : 0))}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+                {formData.projectIds.length > 0 && (
                   <p className="text-[10px] font-medium text-muted-foreground mt-1 px-1 flex justify-between">
-                    <span>Remaining Budget:</span>
+                    <span>Combined Budget:</span>
                     <span className="text-primary font-bold">
-                      {formatCurrency(
-                        (projects.find((p: any) => p.id === formData.projectId)?.dueAmount || 0) +
-                        (formData.projectId === selectedInvoice?.projectId ? Number(selectedInvoice.amount) : 0)
+                      {formatCurrency(projects
+                        .filter((p: any) => formData.projectIds.includes(p.id))
+                        .reduce((sum: number, p: any) => {
+                            const isIncludedInOriginal = selectedInvoice?.projectIds?.includes(p.id) || selectedInvoice?.projectId === p.id;
+                            const contribution = isIncludedInOriginal ? Number(selectedInvoice.amount) : 0;
+                            return sum + (p.dueAmount || 0) + contribution;
+                        }, 0)
                       )}
                     </span>
                   </p>
                 )}
               </div>
             </div>
+
+            {formData.clientId && (
+              <div className="space-y-2 border-t pt-4">
+                <Label>Include Previous Dues From:</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                    {projects
+                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && p.dueAmount > 0)
+                        .map((p: any) => (
+                            <div key={p.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-accent/50 transition-colors">
+                                <Checkbox 
+                                    id={`edit-due-${p.id}`}
+                                    checked={formData.selectedDues.includes(p.id)}
+                                    onCheckedChange={(checked) => {
+                                        let newDues = [...formData.selectedDues];
+                                        if (checked) {
+                                            newDues.push(p.id);
+                                        } else {
+                                            newDues = newDues.filter(id => id !== p.id);
+                                        }
+                                        
+                                        const total = projects
+                                            .filter((proj: any) => newDues.includes(proj.id))
+                                            .reduce((sum: number, proj: any) => sum + (proj.dueAmount || 0), 0);
+                                            
+                                        setFormData({ ...formData, selectedDues: newDues, previousDue: total });
+                                    }}
+                                />
+                                <Label htmlFor={`edit-due-${p.id}`} className="text-xs cursor-pointer flex-1 truncate">
+                                    {p.name}
+                                </Label>
+                                <span className="text-[10px] text-destructive font-bold">
+                                    {formatCurrency(p.dueAmount)}
+                                </span>
+                            </div>
+                        ))
+                    }
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -793,12 +934,12 @@ const Invoices = () => {
                     <History className="w-4 h-4 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Outstanding Balance</p>
+                    <p className="text-[10px] font-bold text-destructive/60 uppercase tracking-tighter">Previous Selected Balance</p>
                     <p className="text-base font-bold text-destructive leading-tight">{formatCurrency(formData.previousDue)}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] text-muted-foreground italic leading-tight">This will be added to the<br />Final Payable Amount</p>
+                  <p className="text-[9px] text-muted-foreground italic leading-tight">Included from {formData.selectedDues.length} projects</p>
                 </div>
               </div>
             )}

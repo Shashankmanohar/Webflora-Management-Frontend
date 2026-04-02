@@ -145,7 +145,8 @@ export interface UpdateClientRequest {
 export interface InvoiceBackend {
     _id: string;
     clientId: string | ClientBackend;
-    projectId: string | ProjectBackend;
+    projectId: string | ProjectBackend; // Keep for backward compatibility/single project logic
+    projectIds?: string[] | ProjectBackend[]; // New multi-project support
     referenceNo: string;
     invoiceNo: string;
     amount: number;
@@ -156,6 +157,7 @@ export interface InvoiceBackend {
     previousDue?: number;
     totalPaid?: number;
     dueAmount?: number;
+    selectedDues?: string[];
     dueBreakdown?: Array<{ projectName: string; amount: number }>;
     projectTotal?: number;
     items?: Array<{ service: string; units: string; price: number }>;
@@ -163,7 +165,8 @@ export interface InvoiceBackend {
 
 export interface CreateInvoiceRequest {
     clientId: string;
-    projectId: string;
+    projectIds: string[];
+    selectedDues?: string[];
     referenceNo: string;
     invoiceNo: string;
     amount: number;
@@ -177,7 +180,8 @@ export interface CreateInvoiceRequest {
 
 export interface UpdateInvoiceRequest {
     clientId?: string;
-    projectId?: string;
+    projectIds?: string[];
+    selectedDues?: string[];
     referenceNo?: string;
     invoiceNo?: string;
     amount?: number;
@@ -407,6 +411,10 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
         method: invoice.method,
         description: invoice.description,
         clientId: typeof invoice.clientId === 'string' ? invoice.clientId : (client as any)?._id,
+        projectIds: Array.isArray(invoice.projectIds) 
+            ? invoice.projectIds.map((p: any) => typeof p === 'string' ? p : p._id)
+            : [typeof invoice.projectId === 'string' ? invoice.projectId : (project as any)?._id],
+        selectedDues: invoice.selectedDues || [],
         projectDue: (project as any)?.dueAmount ?? 0,
         previousDue: invoice.previousDue || 0,
         dueBreakdown: invoice.dueBreakdown || [],
