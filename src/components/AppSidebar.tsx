@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Banknote,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +30,7 @@ const navItems = [
   { to: "/", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/clients", icon: Users, label: "Clients" },
   { to: "/salaries", icon: Banknote, label: "Salaries" },
+  { to: "/expenses", icon: CreditCard, label: "Expenses" },
   { to: "/invoices", icon: FileText, label: "Invoices" },
   { to: "/projects", icon: FolderKanban, label: "Projects" },
   { to: "/handovers", icon: Briefcase, label: "Handovers" },
@@ -95,10 +97,11 @@ const SidebarContent = ({
         {navItems
           .filter(item => {
             if (!user) return false;
-            if (user.role === 'admin') return true;
+            const role = user.role?.toLowerCase();
+            if (role === 'admin') return true;
 
             // For employee and intern, only show specific items
-            const allowedPaths = ['/', '/handovers', '/notices', '/communications', '/salaries'];
+            const allowedPaths = ['/', '/handovers', '/notices', '/communications', '/salaries', '/expenses'];
             return allowedPaths.includes(item.to);
           })
           .map((item, index) => {

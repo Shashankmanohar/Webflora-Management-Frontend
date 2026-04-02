@@ -19,6 +19,7 @@ import {
   X,
   Banknote,
   History,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ const navigation = [
       { to: "/", icon: LayoutDashboard, label: "Dashboard" },
       { to: "/#activity", icon: History, label: "Work Logs" },
       { to: "/handovers", icon: Briefcase, label: "Handovers" },
+      { to: "/expenses", icon: CreditCard, label: "Expenses" },
     ]
   },
   {

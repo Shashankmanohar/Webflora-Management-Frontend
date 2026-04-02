@@ -59,4 +59,9 @@ export const API_ENDPOINTS = {
     AUTH_FORGOT_PASSWORD: '/api/auth/forgot-password',
     AUTH_VERIFY_OTP: '/api/auth/verify-otp',
     AUTH_RESET_PASSWORD: '/api/auth/reset-password',
+
+    // Expense
+    EXPENSE_BASE: '/api/expense/all',
+    EXPENSE_ADD: '/api/expense/add',
+    EXPENSE_DELETE: (id: string) => `/api/expense/${id}`,
 } as const;

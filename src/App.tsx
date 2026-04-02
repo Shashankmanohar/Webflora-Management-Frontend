@@ -24,6 +24,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import VerifyOTP from "./pages/VerifyOTP";
 import ResetPassword from "./pages/ResetPassword";
 import AdminActivityView from "./pages/AdminActivityView";
+import ExpenseManagement from "./pages/ExpenseManagement";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                       <Route path="/reports" element={<Reports />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/activity" element={<AdminActivityView />} />
+                      <Route path="/expenses" element={<ExpenseManagement />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </RoleBasedLayout>

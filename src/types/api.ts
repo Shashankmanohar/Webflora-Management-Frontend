@@ -297,6 +297,50 @@ export interface SalaryStats {
 }
 
 
+// Expense Types
+export interface ExpenseBackend {
+    _id: string;
+    date: string;
+    amount: number;
+    description: string;
+    category: "Food" | "Travel" | "Office Supplies" | "Salary/Payment" | "Marketing" | "Others";
+    type: "Self Spent" | "Sent to Employee" | "Sent to Intern" | "Company Expense";
+    recipientId?: string;
+    recipientModel?: "employee" | "intern";
+    recipientName?: string;
+    receiptImage: string;
+    recordedBy: string | any;
+    status: "pending" | "approved" | "rejected";
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateExpenseRequest {
+    date: string;
+    amount: number;
+    description: string;
+    category: string;
+    type: string;
+    recipientId?: string;
+    recipientModel?: string;
+    receiptImage: string;
+}
+
+export const adaptExpenseData = (expense: ExpenseBackend): any => {
+    return {
+        id: expense._id,
+        date: expense.date,
+        amount: expense.amount,
+        description: expense.description,
+        category: expense.category,
+        type: expense.type,
+        recipientName: expense.recipientName || 'N/A',
+        receiptImage: expense.receiptImage,
+        status: expense.status,
+        recordedBy: typeof expense.recordedBy === 'object' ? expense.recordedBy.name : 'Unknown',
+    };
+};
+
 // Data Adapters - Convert backend data to frontend format
 export const adaptEmployeeData = (employee: EmployeeBackend): any => {
     return {
