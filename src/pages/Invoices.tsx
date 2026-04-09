@@ -101,6 +101,60 @@ const Invoices = () => {
     items: [],
   });
 
+  // Helper to sync items based on selection
+  const syncItems = (currentItems: any[], newProjectIds: string[], newSelectedDues: string[]) => {
+    let updatedItems = [...currentItems];
+
+    // 1. Remove auto-items that are no longer selected
+    updatedItems = updatedItems.filter(item => {
+      const isProjectItem = projects.some((p: any) => p.name === item.service);
+      const isDueItem = item.service.startsWith("Due of ");
+      
+      if (isProjectItem) {
+        return newProjectIds.some((id: any) => projects.find((p: any) => p.id === id)?.name === item.service);
+      }
+      if (isDueItem) {
+        const projectName = item.service.replace("Due of ", "");
+        return newSelectedDues.some((id: any) => projects.find((p: any) => p.id === id)?.projectName === projectName || projects.find((p: any) => p.id === id)?.name === projectName);
+      }
+      return true; // Keep manual items
+    });
+
+    // Ensure we don't have overlapping IDs in projectIds and selectedDues
+    const uniqueProjectIds = newProjectIds;
+    const uniqueSelectedDues = newSelectedDues.filter(id => !uniqueProjectIds.includes(id));
+
+    // 2. Add missing project items (only those with an outstanding balance)
+    uniqueProjectIds.forEach((id: any) => {
+      const project = projects.find((p: any) => p.id === id);
+      if (project && Number(project.dueAmount) > 0 && !updatedItems.some(item => item.service === project.name)) {
+        updatedItems.push({ service: project.name, units: "1", price: Number(project.dueAmount) });
+      }
+    });
+
+    // 3. Add missing due items (only if NOT already added as a primary project item)
+    uniqueSelectedDues.forEach((id: any) => {
+      const project = projects.find((p: any) => p.id === id);
+      if (project && Number(project.dueAmount) > 0) {
+        const serviceName = `Due of ${project.projectName || project.name}`;
+        if (!updatedItems.some(item => item.service === serviceName)) {
+          updatedItems.push({ service: serviceName, units: "1", price: Number(project.dueAmount) });
+        }
+      }
+    });
+
+    return updatedItems;
+  };
+
+  useEffect(() => {
+    if (isCreateDialogOpen || isEditDialogOpen) {
+       const newItems = syncItems(formData.items, formData.projectIds, formData.selectedDues);
+       if (JSON.stringify(newItems) !== JSON.stringify(formData.items)) {
+         setFormData(prev => ({ ...prev, items: newItems }));
+       }
+    }
+  }, [formData.projectIds, formData.selectedDues, isCreateDialogOpen, isEditDialogOpen]);
+
   const { data: invoices = [], isLoading, error } = useInvoices();
   const { data: clients = [] } = useClients();
   const { data: projects = [] } = useProjects();
@@ -129,13 +183,14 @@ const Invoices = () => {
       : Number(formData.amount);
 
     // Frontend budget validation
-    const selectedProjects = projects.filter((p: any) => formData.projectIds.includes(p.id));
-    const totalBudget = selectedProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
+    const allInvolvedProjectIds = [...new Set([...formData.projectIds, ...formData.selectedDues])];
+    const selectedProjects = projects.filter((p: any) => allInvolvedProjectIds.includes(p.id));
+    const totalBudget = selectedProjects.reduce((sum: number, p: any) => sum + (Number(p.dueAmount) || 0), 0);
     
     if (amountNum > totalBudget) {
       toast({
         title: "Budget Exceeded",
-        description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget}).`,
+        description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget.toLocaleString()}).`,
         variant: "destructive",
       });
       return;
@@ -206,17 +261,20 @@ const Invoices = () => {
       ? formData.items.reduce((sum, item) => sum + (Number(item.price) || 0), 0)
       : Number(formData.amount);
 
-    const selectedProjects = projects.filter((p: any) => formData.projectIds.includes(p.id));
-    const totalBudget = selectedProjects.reduce((sum: number, p: any) => {
-        const originalInvoiceFound = selectedInvoice.projectIds?.includes(p.id) || selectedInvoice.projectId === p.id;
+    const allInvolvedProjectIds = [...new Set([...formData.projectIds, ...formData.selectedDues])];
+    const involvedProjects = projects.filter((p: any) => allInvolvedProjectIds.includes(p.id));
+    
+    // Total budget includes original invoice amount for projects that were already in this invoice
+    const totalBudget = involvedProjects.reduce((sum: number, p: any) => {
+        const originalInvoiceFound = (selectedInvoice?.projectIds?.includes(p.id)) || (selectedInvoice?.projectId === p.id);
         const previousContribution = originalInvoiceFound ? Number(selectedInvoice.amount) : 0;
-        return sum + (p.dueAmount || 0) + previousContribution;
+        return sum + (Number(p.dueAmount) || 0) + previousContribution;
     }, 0);
 
     if (amountNum > totalBudget) {
         toast({
             title: "Budget Exceeded",
-            description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget}).`,
+            description: `This invoice amount exceeds the remaining combined project budget (₹${totalBudget.toLocaleString()}).`,
             variant: "destructive",
         });
         return;
@@ -440,8 +498,8 @@ const Invoices = () => {
                   value={formData.clientId}
                   onValueChange={(value) => {
                     const client = clients.find((c: any) => c.id === value);
-                    // Filter projects for this client to get default dues
-                    const clientProjects = projects.filter((p: any) => p.clientId === value);
+                    // Filter projects for this client to get default dues (only those with an outstanding balance)
+                    const clientProjects = projects.filter((p: any) => p.clientId === value && p.dueAmount > 0);
                     const totalDue = clientProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
                     const allProjectIds = clientProjects.map((p: any) => p.id);
                     
@@ -450,8 +508,8 @@ const Invoices = () => {
                       clientId: value,
                       referenceNo: client?.referenceNo || "",
                       projectIds: [], // Reset selected projects
-                      selectedDues: allProjectIds, // Default to all dues included
-                      previousDue: totalDue
+                      selectedDues: [], // Default to NO dues included (manual selection)
+                      previousDue: 0,
                     });
                   }}
                   required
@@ -460,7 +518,7 @@ const Invoices = () => {
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client: any) => (
+                    {clients.filter((c: any) => c.totalDue > 0).map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
                         <div className="flex justify-between items-center w-full">
                           <span>{client.name}</span>
@@ -482,7 +540,7 @@ const Invoices = () => {
                   <ScrollArea className="h-[100px]">
                     <div className="space-y-2 pr-4">
                       {projects
-                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (p.dueAmount > 0 || formData.projectIds.includes(p.id)))
+                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (Number(p.dueAmount) > 0 || formData.projectIds.includes(p.id)))
                         .map((project: any) => (
                           <div key={project.id} className="flex items-center space-x-2">
                             <Checkbox
@@ -490,7 +548,18 @@ const Invoices = () => {
                               checked={formData.projectIds.includes(project.id)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setFormData({ ...formData, projectIds: [...formData.projectIds, project.id] });
+                                  // Mutual exclusion: remove from selectedDues
+                                  const newSelectedDues = formData.selectedDues.filter(id => id !== project.id);
+                                  const newTotalDue = projects
+                                    .filter((proj: any) => newSelectedDues.includes(proj.id))
+                                    .reduce((sum: number, proj: any) => sum + (Number(proj.dueAmount) || 0), 0);
+
+                                  setFormData({ 
+                                    ...formData, 
+                                    projectIds: [...formData.projectIds, project.id],
+                                    selectedDues: newSelectedDues,
+                                    previousDue: newTotalDue
+                                  });
                                 } else {
                                   setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
                                 }
@@ -529,7 +598,7 @@ const Invoices = () => {
                 <Label>Include Previous Dues From:</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                     {projects
-                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && p.dueAmount > 0)
+                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && Number(p.dueAmount) > 0)
                         .map((p: any) => (
                             <div key={p.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-accent/50 transition-colors">
                                 <Checkbox 
@@ -543,12 +612,13 @@ const Invoices = () => {
                                             newDues = newDues.filter(id => id !== p.id);
                                         }
                                         
-                                        // Calculate new previousDue sum
+                                        // Calculate only from the Filtered dues
+                                        const actualDues = newDues.filter(id => !formData.projectIds.includes(id));
                                         const total = projects
-                                            .filter((proj: any) => newDues.includes(proj.id))
-                                            .reduce((sum: number, proj: any) => sum + (proj.dueAmount || 0), 0);
+                                            .filter((proj: any) => actualDues.includes(proj.id))
+                                            .reduce((sum: number, proj: any) => sum + (Number(proj.dueAmount) || 0), 0);
                                             
-                                        setFormData({ ...formData, selectedDues: newDues, previousDue: total });
+                                        setFormData({ ...formData, selectedDues: actualDues, previousDue: total });
                                     }}
                                 />
                                 <Label htmlFor={`due-${p.id}`} className="text-xs cursor-pointer flex-1 truncate">
@@ -560,7 +630,7 @@ const Invoices = () => {
                             </div>
                         ))
                     }
-                    {projects.filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id)).length === 0 && (
+                    {projects.filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && p.dueAmount > 0).length === 0 && (
                         <p className="text-[10px] text-muted-foreground italic col-span-2">No other outstanding projects found for this client.</p>
                     )}
                 </div>
@@ -782,7 +852,7 @@ const Invoices = () => {
                   value={formData.clientId}
                   onValueChange={(value) => {
                     const client = clients.find((c: any) => c.id === value);
-                    const clientProjects = projects.filter((p: any) => p.clientId === value);
+                    const clientProjects = projects.filter((p: any) => p.clientId === value && p.dueAmount > 0);
                     const totalDue = clientProjects.reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0);
                     const allProjectIds = clientProjects.map((p: any) => p.id);
 
@@ -801,7 +871,7 @@ const Invoices = () => {
                     <SelectValue placeholder="Select client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clients.map((client: any) => (
+                    {clients.filter((c: any) => c.totalDue > 0).map((client: any) => (
                       <SelectItem key={client.id} value={client.id}>
                         <div className="flex justify-between items-center w-full">
                           <span>{client.name}</span>
@@ -823,7 +893,7 @@ const Invoices = () => {
                   <ScrollArea className="h-[100px]">
                     <div className="space-y-2 pr-4">
                       {projects
-                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (p.dueAmount > 0 || formData.projectIds.includes(p.id)))
+                        .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (Number(p.dueAmount) > 0 || formData.projectIds.includes(p.id)))
                         .map((project: any) => (
                           <div key={project.id} className="flex items-center space-x-2">
                             <Checkbox
@@ -831,7 +901,18 @@ const Invoices = () => {
                               checked={formData.projectIds.includes(project.id)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setFormData({ ...formData, projectIds: [...formData.projectIds, project.id] });
+                                  // Mutual exclusion: remove from selectedDues
+                                  const newSelectedDues = formData.selectedDues.filter(id => id !== project.id);
+                                  const newTotalDue = projects
+                                    .filter((proj: any) => newSelectedDues.includes(proj.id))
+                                    .reduce((sum: number, proj: any) => sum + (Number(proj.dueAmount) || 0), 0);
+
+                                  setFormData({ 
+                                    ...formData, 
+                                    projectIds: [...formData.projectIds, project.id],
+                                    selectedDues: newSelectedDues,
+                                    previousDue: newTotalDue
+                                  });
                                 } else {
                                   setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
                                 }
@@ -874,7 +955,7 @@ const Invoices = () => {
                 <Label>Include Previous Dues From:</Label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
                     {projects
-                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && p.dueAmount > 0)
+                        .filter((p: any) => p.clientId === formData.clientId && !formData.projectIds.includes(p.id) && Number(p.dueAmount) > 0)
                         .map((p: any) => (
                             <div key={p.id} className="flex items-center space-x-2 p-2 border rounded hover:bg-accent/50 transition-colors">
                                 <Checkbox 

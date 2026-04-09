@@ -9,10 +9,10 @@ import {
 
 export const invoiceApi = {
     getAll: async () => {
-        const response = await axiosInstance.get<{ invoice: InvoiceBackend[] }>(
+        const response = await axiosInstance.get<{ invoices: InvoiceBackend[] }>(
             API_ENDPOINTS.INVOICE_BASE
         );
-        return response.data.invoice.map(adaptInvoiceData);
+        return response.data.invoices.map(adaptInvoiceData);
     },
 
     getById: async (id: string) => {

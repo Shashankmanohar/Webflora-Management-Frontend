@@ -96,25 +96,24 @@ export const generateInvoicePDF = (invoice: any) => {
         invoice.items.forEach((item: any) => {
             tableRows.push([
                 item.service,
-                item.units,
+                item.units || "1",
                 formatCurrency(item.price || 0)
             ]);
         });
 
+        // Only add breakdown if it has items NOT already in the items list
+        // (This is a safety check for older invoices)
         if (breakdown.length > 0) {
             breakdown.forEach((item: any) => {
-                tableRows.push([
-                    `Due of ${item.projectName || 'Previous Project'}`,
-                    "1",
-                    formatCurrency(item.amount || 0)
-                ]);
+                const itemName = `Due of ${item.projectName}`;
+                if (!invoice.items.some((i: any) => i.service === itemName || i.service === item.projectName)) {
+                    tableRows.push([
+                        itemName,
+                        "1",
+                        formatCurrency(item.amount || 0)
+                    ]);
+                }
             });
-        } else if (previousDue > 0) {
-            tableRows.push([
-                "Previous Outstanding Balance",
-                "-",
-                formatCurrency(previousDue)
-            ]);
         }
         
         colStyles = {
@@ -186,13 +185,12 @@ export const generateInvoicePDF = (invoice: any) => {
         margin: { left: 20, right: 20 },
     });
 
-    // 5. Financial Summary (Matching handwritten layout: Total, Paid, Due)
-    // Use the final height of the table to position the summary
+    // 5. Financial Summary
     const finalY = (doc as any).lastAutoTable?.finalY || 135;
-    const currentInvoiceAmount = Number(invoice.amount || 0); // This is the 'Paid' amount in this context
-    const grandTotal = projectTotal + previousDue;
+    const currentInvoiceAmount = Number(invoice.amount || 0);
+    const grandTotal = invoice.grandTotal !== undefined ? Number(invoice.grandTotal) : (currentInvoiceAmount + previousDue);
 
-    // Determine "Paid" amount: ONLY the current invoice amount is paid if status is 'paid'
+    // Determine "Paid" amount
     let paidAmount = invoice.status === 'paid' ? currentInvoiceAmount : 0;
     let dueAmount = grandTotal - paidAmount;
 

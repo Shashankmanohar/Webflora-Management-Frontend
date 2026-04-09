@@ -145,7 +145,7 @@ export interface UpdateClientRequest {
 export interface InvoiceBackend {
     _id: string;
     clientId: string | ClientBackend;
-    projectId: string | ProjectBackend; // Keep for backward compatibility/single project logic
+    projectId?: string | ProjectBackend; // Keep for backward compatibility/single project logic
     projectIds?: string[] | ProjectBackend[]; // New multi-project support
     referenceNo: string;
     invoiceNo: string;
@@ -161,6 +161,10 @@ export interface InvoiceBackend {
     dueBreakdown?: Array<{ projectName: string; amount: number }>;
     projectTotal?: number;
     items?: Array<{ service: string; units: string; price: number }>;
+    // Fields added by backend controllers
+    projectName?: string;
+    clientName?: string;
+    grandTotal?: number;
 }
 
 export interface CreateInvoiceRequest {
@@ -392,17 +396,36 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
 
     // Extract client info if populated
     const client = typeof invoice.clientId === 'object' ? invoice.clientId : null;
-    const project = typeof invoice.projectId === 'object' ? invoice.projectId : null;
+    const projects = Array.isArray(invoice.projectIds) 
+        ? invoice.projectIds.filter(p => typeof p === 'object') as ProjectBackend[]
+        : [];
+    const firstProject = typeof invoice.projectId === 'object' ? invoice.projectId : (projects[0] || null);
+
+    // Calculate project name if not provided by backend
+    let projectName = invoice.projectName;
+    if (!projectName) {
+        if (projects.length > 0) {
+            projectName = projects.map(p => p.projectName).join(" & ");
+        } else if (firstProject) {
+            projectName = firstProject.projectName;
+        } else {
+            projectName = 'Unknown Project';
+        }
+    }
+
+    const previousDue = Number(invoice.previousDue) || 0;
+    const grandTotal = invoice.grandTotal !== undefined ? invoice.grandTotal : (amount + previousDue);
 
     return {
         id: invoice._id,
         number: invoice.invoiceNo,
-        clientName: client?.clientName || 'Unknown Client',
-        projectName: project?.projectName || 'Unknown Project',
-        projectId: typeof invoice.projectId === 'string' ? invoice.projectId : (project as any)?._id,
-        company: client?.clientName || 'Unknown Company',
+        clientName: invoice.clientName || client?.clientName || 'Unknown Client',
+        projectName: projectName,
+        projectId: typeof invoice.projectId === 'string' ? invoice.projectId : firstProject?._id,
+        company: invoice.clientName || client?.clientName || 'Unknown Company',
         amount: amount,
         total: amount,
+        grandTotal: grandTotal,
         status: invoice.status || 'pending',
         date: invoice.date, // Added for UI compatibility
         issueDate: invoice.date,
@@ -413,12 +436,12 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
         clientId: typeof invoice.clientId === 'string' ? invoice.clientId : (client as any)?._id,
         projectIds: Array.isArray(invoice.projectIds) 
             ? invoice.projectIds.map((p: any) => typeof p === 'string' ? p : p._id)
-            : [typeof invoice.projectId === 'string' ? invoice.projectId : (project as any)?._id],
+            : [typeof invoice.projectId === 'string' ? invoice.projectId : firstProject?._id],
         selectedDues: invoice.selectedDues || [],
-        projectDue: (project as any)?.dueAmount ?? 0,
-        previousDue: invoice.previousDue || 0,
+        projectDue: (firstProject as any)?.dueAmount ?? 0,
+        previousDue: previousDue,
         dueBreakdown: invoice.dueBreakdown || [],
-        projectTotal: (project as any)?.totalAmount || amount,
+        projectTotal: (firstProject as any)?.totalAmount || amount,
         items: invoice.items || [],
     };
 };
@@ -436,7 +459,7 @@ export const adaptProjectData = (project: ProjectBackend): any => {
             project.status === "In Progress" ? 50 : 0,
         budget: project.totalAmount,
         totalPaid: project.totalPaid || 0,
-        dueAmount: project.dueAmount || 0,
+        dueAmount: Number(project.dueAmount) || 0,
         invoices: Array.isArray(project.invoices) ? project.invoices.map(adaptInvoiceData) : [],
         spent: project.totalPaid || 0,
         startDate: project.startDate, // Added for UI compatibility
