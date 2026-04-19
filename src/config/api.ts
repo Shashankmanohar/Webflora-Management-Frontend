@@ -64,4 +64,18 @@ export const API_ENDPOINTS = {
     EXPENSE_BASE: '/api/expense/all',
     EXPENSE_ADD: '/api/expense/add',
     EXPENSE_DELETE: (id: string) => `/api/expense/${id}`,
+
+    // Lead
+    LEAD_BASE: '/api/lead',
+    LEAD_ALL: '/api/lead/all',
+    LEAD_CREATE: '/api/lead/create',
+    LEAD_UPDATE: (id: string) => `/api/lead/update/${id}`,
+    LEAD_DELETE: (id: string) => `/api/lead/delete/${id}`,
+
+    // Quotation
+    QUOTATION_BASE: '/api/quotation',
+    QUOTATION_ALL: '/api/quotation/all',
+    QUOTATION_CREATE: '/api/quotation/create',
+    QUOTATION_UPDATE: (id: string) => `/api/quotation/update/${id}`,
+    QUOTATION_DELETE: (id: string) => `/api/quotation/delete/${id}`,
 } as const;

@@ -6,4 +6,6 @@ export { projectApi } from './projects';
 export { handoverApi } from './handover';
 export { noticeApi, internApi, communicationApi } from './additional';
 export { attendanceApi } from './attendance';
+export { leadApi } from './leads';
+export { quotationApi } from './quotations';
 

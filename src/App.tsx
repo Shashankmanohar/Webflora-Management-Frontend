@@ -25,6 +25,8 @@ import VerifyOTP from "./pages/VerifyOTP";
 import ResetPassword from "./pages/ResetPassword";
 import AdminActivityView from "./pages/AdminActivityView";
 import ExpenseManagement from "./pages/ExpenseManagement";
+import Leads from "./pages/Leads";
+import Quotations from "./pages/Quotations";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +74,8 @@ const App = () => (
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/activity" element={<AdminActivityView />} />
                       <Route path="/expenses" element={<ExpenseManagement />} />
+                      <Route path="/leads" element={<Leads />} />
+                      <Route path="/quotations" element={<Quotations />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </RoleBasedLayout>

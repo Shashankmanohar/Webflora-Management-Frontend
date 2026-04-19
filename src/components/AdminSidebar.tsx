@@ -35,6 +35,8 @@ const navigation = [
       { to: "/projects", icon: FolderKanban, label: "Projects" },
       { to: "/invoices", icon: FileText, label: "Invoices" },
       { to: "/clients", icon: Users, label: "Clients" },
+      { to: "/leads", icon: Users, label: "Leads" },
+      { to: "/quotations", icon: FileText, label: "Quotations" },
       { to: "/expenses", icon: CreditCard, label: "Expenses" },
     ]
   },

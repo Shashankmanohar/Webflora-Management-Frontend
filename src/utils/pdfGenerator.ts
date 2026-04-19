@@ -260,3 +260,158 @@ export const generateInvoicePDF = (invoice: any) => {
     // Save
     doc.save(`Invoice_${invoice.number || '000'}.pdf`);
 };
+
+export const generateQuotationPDF = (quotation: any) => {
+    if (!quotation) return;
+
+    const formatCurrency = (amount: number) => {
+        return "Rs. " + new Intl.NumberFormat("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    };
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // 1. Branding Header
+    const logoUrl = "/Blacktextlogo.jpeg";
+    doc.addImage(logoUrl, "JPEG", 20, 12, 65, 20);
+
+    // Company Details (Right Aligned)
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(50, 50, 50);
+    doc.text("Webflora Technologies", pageWidth - 20, 20, { align: "right" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text([
+        "IOC Colony, Kumhrar, Patna, 800026",
+        "hello.webflora@gmail.com",
+        "+91 8863081255, +91 8540814729"
+    ], pageWidth - 20, 25, { align: "right", lineHeightFactor: 1.5 });
+
+    // Divider
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.5);
+    doc.line(20, 42, pageWidth - 20, 42);
+
+    // 2. Document Title & Key Meta
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 95, 31); // Brand Orange
+    doc.text("QUOTATION", 20, 60);
+
+    // Document Meta Block
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont("helvetica", "bold");
+    doc.text("Quotation Details", 20, 72);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`No: ${quotation.quotationNo || 'N/A'}`, 20, 78);
+    doc.text(`Date: ${formatDate(quotation.date)}`, 20, 83);
+    if (quotation.validUntil) {
+        doc.text(`Valid Until: ${formatDate(quotation.validUntil)}`, 20, 88);
+    }
+
+    // 3. Lead Info
+    doc.setTextColor(80, 80, 80);
+    doc.setFont("helvetica", "bold");
+    doc.text("Quoted To:", 120, 72);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text(quotation.leadId?.leadName || "Lead Name", 120, 78);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    if (quotation.leadId?.email) doc.text(quotation.leadId.email, 120, 83);
+    if (quotation.leadId?.contactNumber) doc.text(quotation.leadId.contactNumber, 120, 88);
+
+    // 4. Items Table
+    const tableColumn = ["Service", "Description", "Qty", "Price", "Amount"];
+    const tableRows = quotation.items.map((item: any) => [
+        item.service,
+        item.description || "-",
+        item.quantity || "1",
+        formatCurrency(item.price || 0),
+        formatCurrency(item.amount || 0)
+    ]);
+
+    autoTable(doc, {
+        startY: 105,
+        head: [tableColumn],
+        body: tableRows,
+        theme: "plain",
+        styles: {
+            fontSize: 9,
+            cellPadding: { top: 5, right: 2, bottom: 5, left: 2 },
+            textColor: [50, 50, 50],
+            valign: 'middle'
+        },
+        columnStyles: {
+            0: { cellWidth: 40 },
+            1: { cellWidth: 'auto' },
+            2: { cellWidth: 20, halign: 'center' },
+            3: { cellWidth: 35, halign: 'right' },
+            4: { cellWidth: 35, halign: 'right' },
+        },
+        headStyles: {
+            fillColor: [255, 95, 31],
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            halign: 'center'
+        },
+        alternateRowStyles: {
+            fillColor: [250, 250, 250],
+        },
+        margin: { left: 20, right: 20 },
+    });
+
+    // 5. Financial Summary
+    const finalY = (doc as any).lastAutoTable?.finalY || 135;
+    const totalAmount = Number(quotation.totalAmount || 0);
+
+    const boxY = finalY + 10;
+    doc.setFillColor(255, 245, 240);
+    doc.rect(pageWidth - 85, boxY, 65, 15, "F");
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0, 0, 0);
+    doc.text("Total Amount - ", pageWidth - 80, boxY + 10);
+    doc.setTextColor(255, 95, 31);
+    doc.text(formatCurrency(totalAmount), pageWidth - 25, boxY + 10, { align: "right" });
+
+    // Notes
+    if (quotation.notes) {
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(100, 100, 100);
+        doc.text("Notes:", 20, boxY + 10);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        const splitNotes = doc.splitTextToSize(quotation.notes, 100);
+        doc.text(splitNotes, 20, boxY + 17);
+    }
+
+    // 6. Professional Footer
+    doc.setDrawColor(240, 240, 240);
+    doc.line(20, 265, pageWidth - 20, 265);
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(150, 150, 150);
+    doc.text("This is a formal quotation valid until the date mentioned above.", pageWidth / 2, 272, { align: "center" });
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 95, 31);
+    doc.text("Looking forward to working with you!", pageWidth / 2, 278, { align: "center" });
+
+    // Save
+    doc.save(`Quotation_${quotation.quotationNo || '000'}.pdf`);
+};
