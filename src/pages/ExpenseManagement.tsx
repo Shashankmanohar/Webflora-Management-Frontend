@@ -15,6 +15,13 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
@@ -36,10 +43,11 @@ const ExpenseManagement = () => {
     const [isAddOpen, setIsAddOpen] = useState(false);
     const { user } = useAuth();
     const { toast } = useToast();
+    const [returnStatusFilter, setReturnStatusFilter] = useState<string>("all");
 
     const { data: expenses, isLoading, refetch } = useQuery({
-        queryKey: ["expenses"],
-        queryFn: () => expenseService.getExpenses(),
+        queryKey: ["expenses", returnStatusFilter],
+        queryFn: () => expenseService.getExpenses(returnStatusFilter !== "all" ? { returnStatus: returnStatusFilter } : undefined),
     });
 
     const handleDelete = async (id: string) => {
@@ -51,6 +59,21 @@ const ExpenseManagement = () => {
             toast({
                 title: "Error",
                 description: "Failed to delete expense",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleToggleReturnStatus = async (id: string, currentStatus: string) => {
+        try {
+            const newStatus = currentStatus === "Pending" ? "Returned" : "Pending";
+            await expenseService.updateReturnStatus(id, newStatus);
+            toast({ title: "Success", description: `Marked as ${newStatus}` });
+            refetch();
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to update return status",
                 variant: "destructive",
             });
         }
@@ -71,17 +94,33 @@ const ExpenseManagement = () => {
             />
 
             <Tabs defaultValue="calendar" className="w-full">
-                <TabsList className="grid w-[400px] grid-cols-2">
-                    <TabsTrigger value="calendar" className="gap-2">
-                        <CalendarIcon className="h-4 w-4" /> Calendar View
-                    </TabsTrigger>
-                    <TabsTrigger value="table" className="gap-2">
-                        <TableIcon className="h-4 w-4" /> Table View
-                    </TabsTrigger>
-                </TabsList>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <TabsList className="grid w-[400px] grid-cols-2">
+                        <TabsTrigger value="calendar" className="gap-2">
+                            <CalendarIcon className="h-4 w-4" /> Calendar View
+                        </TabsTrigger>
+                        <TabsTrigger value="table" className="gap-2">
+                            <TableIcon className="h-4 w-4" /> Table View
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <Select value={returnStatusFilter} onValueChange={setReturnStatusFilter}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filter by Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Returned">Returned</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
 
                 <TabsContent value="calendar" className="mt-6">
-                    <ExpenseCalendar expenses={expenses || []} />
+                    <ExpenseCalendar 
+                        expenses={expenses || []} 
+                        onToggleStatus={(id, currentStatus) => user?.role === "admin" && handleToggleReturnStatus(id, currentStatus)}
+                    />
                 </TabsContent>
 
                 <TabsContent value="table" className="mt-6">
@@ -93,6 +132,8 @@ const ExpenseManagement = () => {
                                     <TableHead>Description</TableHead>
                                     <TableHead>Category</TableHead>
                                     <TableHead>Type</TableHead>
+                                    <TableHead>Paid From</TableHead>
+                                    <TableHead>Return Status</TableHead>
                                     <TableHead>Amount</TableHead>
                                     <TableHead>To</TableHead>
                                     <TableHead>Recorded By</TableHead>
@@ -107,6 +148,27 @@ const ExpenseManagement = () => {
                                         <TableCell className="font-medium">{exp.description}</TableCell>
                                         <TableCell><Badge variant="secondary">{exp.category}</Badge></TableCell>
                                         <TableCell><Badge variant="outline">{exp.type}</Badge></TableCell>
+                                        <TableCell>
+                                            <Badge variant="secondary" className={exp.moneySource === "Company Money" ? "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20" : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"}>
+                                                {exp.moneySource}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <Badge 
+                                                    variant={exp.returnStatus === "Returned" ? "default" : "outline"}
+                                                    className={`cursor-pointer ${exp.returnStatus === "Returned" ? "bg-green-500 hover:bg-green-600 w-fit" : "text-yellow-600 border-yellow-600 w-fit"}`}
+                                                    onClick={() => user?.role === "admin" && handleToggleReturnStatus(exp._id, exp.returnStatus)}
+                                                >
+                                                    {exp.returnStatus}
+                                                </Badge>
+                                                {exp.returnStatus === "Returned" && exp.returnDate && (
+                                                    <span className="text-[10px] text-green-600 font-medium">
+                                                        {format(new Date(exp.returnDate), "dd MMM, HH:mm")}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="font-bold">₹{exp.amount}</TableCell>
                                         <TableCell>{exp.recipientName || "-"}</TableCell>
                                         <TableCell>

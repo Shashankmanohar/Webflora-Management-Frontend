@@ -8,9 +8,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ExpenseCalendarProps {
     expenses: ExpenseBackend[];
+    onToggleStatus?: (id: string, currentStatus: string) => void;
 }
 
-const ExpenseCalendar = ({ expenses }: ExpenseCalendarProps) => {
+const ExpenseCalendar = ({ expenses, onToggleStatus }: ExpenseCalendarProps) => {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
     const selectedDayExpenses = expenses.filter(exp => 
@@ -65,9 +66,26 @@ const ExpenseCalendar = ({ expenses }: ExpenseCalendarProps) => {
                                         <div className="flex justify-between items-start mb-2">
                                             <div>
                                                 <p className="font-semibold text-lg">₹{exp.amount}</p>
-                                                <Badge variant="outline" className="mt-1">{exp.category}</Badge>
+                                                <div className="flex gap-1 mt-1">
+                                                    <Badge variant="outline">{exp.category}</Badge>
+                                                    <Badge 
+                                                        variant="secondary" 
+                                                        className={`cursor-pointer ${exp.returnStatus === "Returned" ? "bg-green-500/20 text-green-500 hover:bg-green-500/30" : "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30"}`}
+                                                        onClick={() => onToggleStatus?.(exp._id, exp.returnStatus)}
+                                                    >
+                                                        {exp.returnStatus}
+                                                    </Badge>
+                                                    {exp.returnStatus === "Returned" && exp.returnDate && (
+                                                        <span className="text-[10px] text-green-600 font-medium self-center">
+                                                            on {format(new Date(exp.returnDate), "dd MMM")}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <Badge>{exp.type}</Badge>
+                                            <div className="flex flex-col items-end gap-1">
+                                                <Badge>{exp.type}</Badge>
+                                                <Badge variant="outline" className="text-[10px]">{exp.moneySource}</Badge>
+                                            </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground mb-2">{exp.description}</p>
                                         <div className="flex items-center gap-2 text-xs text-muted-foreground">

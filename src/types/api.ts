@@ -313,6 +313,9 @@ export interface ExpenseBackend {
     description: string;
     category: "Food" | "Travel" | "Office Supplies" | "Salary/Payment" | "Marketing" | "Others";
     type: "Self Spent" | "Sent to Employee" | "Sent to Intern" | "Company Expense";
+    moneySource: "Own Money" | "Company Money";
+    returnStatus: "Pending" | "Returned";
+    returnDate?: string;
     recipientId?: string;
     recipientModel?: "employee" | "intern";
     recipientName?: string;
@@ -329,6 +332,7 @@ export interface CreateExpenseRequest {
     description: string;
     category: string;
     type: string;
+    moneySource: string;
     recipientId?: string;
     recipientModel?: string;
     receiptImage: string;
@@ -342,6 +346,8 @@ export const adaptExpenseData = (expense: ExpenseBackend): any => {
         description: expense.description,
         category: expense.category,
         type: expense.type,
+        moneySource: expense.moneySource,
+        returnStatus: expense.returnStatus,
         recipientName: expense.recipientName || 'N/A',
         receiptImage: expense.receiptImage,
         status: expense.status,

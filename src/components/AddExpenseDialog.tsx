@@ -41,6 +41,7 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("");
     const [type, setType] = useState("");
+    const [moneySource, setMoneySource] = useState("");
     const [recipientId, setRecipientId] = useState("");
     const [recipientModel, setRecipientModel] = useState<"employee" | "intern" | "">("");
     const [receipt, setReceipt] = useState<File | null>(null);
@@ -84,6 +85,15 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
             return;
         }
 
+        if (!moneySource) {
+            toast({
+                title: "Error",
+                description: "Please select whose money is being used",
+                variant: "destructive",
+            });
+            return;
+        }
+
         setLoading(true);
         try {
             const formData = new FormData();
@@ -92,6 +102,7 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
             formData.append("description", description);
             formData.append("category", category);
             formData.append("type", type);
+            formData.append("moneySource", moneySource);
             formData.append("receipt", receipt);
             if (recipientId) formData.append("recipientId", recipientId);
             if (recipientModel) formData.append("recipientModel", recipientModel);
@@ -106,9 +117,11 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
             onOpenChange(false);
             resetForm();
         } catch (error: any) {
+            console.error("Expense creation error:", error);
+            const serverError = error.response?.data?.error || error.response?.data?.message || error.message;
             toast({
                 title: "Error",
-                description: error.response?.data?.message || "Failed to record expense",
+                description: serverError,
                 variant: "destructive",
             });
         } finally {
@@ -122,6 +135,7 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
         setDescription("");
         setCategory("");
         setType("");
+        setMoneySource("");
         setRecipientId("");
         setRecipientModel("");
         setReceipt(null);
@@ -190,6 +204,19 @@ const AddExpenseDialog = ({ isOpen, onOpenChange, onSuccess }: AddExpenseDialogP
                                 </SelectContent>
                             </Select>
                         </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Money Source *</Label>
+                        <Select value={moneySource} onValueChange={setMoneySource} required>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Whose money is used?" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Own Money">Own Money</SelectItem>
+                                <SelectItem value="Company Money">Company Money</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {type === "Sent to Employee" && (

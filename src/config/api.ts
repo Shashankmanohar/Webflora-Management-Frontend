@@ -61,9 +61,11 @@ export const API_ENDPOINTS = {
     AUTH_RESET_PASSWORD: '/api/auth/reset-password',
 
     // Expense
-    EXPENSE_BASE: '/api/expense/all',
+    EXPENSE_BASE: '/api/expense',
+    EXPENSE_ALL: '/api/expense/all',
     EXPENSE_ADD: '/api/expense/add',
     EXPENSE_DELETE: (id: string) => `/api/expense/${id}`,
+    EXPENSE_UPDATE_STATUS: (id: string) => `/api/expense/${id}/return-status`,
 
     // Lead
     LEAD_BASE: '/api/lead',
