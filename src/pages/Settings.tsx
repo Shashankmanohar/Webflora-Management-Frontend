@@ -40,11 +40,11 @@ const Settings = () => {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Website</Label>
-                  <Input defaultValue="https://webflora.in" className="h-9" />
+                  <Input defaultValue="https://webfloratechnologies.com" className="h-9" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Email</Label>
-                  <Input defaultValue="contact@webflora.in" className="h-9" />
+                  <Input defaultValue="contact@webfloratechnologies.com" className="h-9" />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Phone</Label>

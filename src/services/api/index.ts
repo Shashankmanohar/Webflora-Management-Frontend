@@ -8,4 +8,5 @@ export { noticeApi, internApi, communicationApi } from './additional';
 export { attendanceApi } from './attendance';
 export { leadApi } from './leads';
 export { quotationApi } from './quotations';
+export { agreementApi } from './agreements';
 

@@ -32,6 +32,7 @@ const navItems = [
   { to: "/salaries", icon: Banknote, label: "Salaries" },
   { to: "/expenses", icon: CreditCard, label: "Expenses" },
   { to: "/invoices", icon: FileText, label: "Invoices" },
+  { to: "/agreements", icon: FileText, label: "Agreements" },
   { to: "/projects", icon: FolderKanban, label: "Projects" },
   { to: "/handovers", icon: Briefcase, label: "Handovers" },
   { to: "/employees", icon: UserCog, label: "Employees" },

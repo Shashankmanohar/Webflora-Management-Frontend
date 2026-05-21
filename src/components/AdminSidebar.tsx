@@ -37,6 +37,7 @@ const navigation = [
       { to: "/clients", icon: Users, label: "Clients" },
       { to: "/leads", icon: Users, label: "Leads" },
       { to: "/quotations", icon: FileText, label: "Quotations" },
+      { to: "/agreements", icon: FileText, label: "Agreements" },
       { to: "/expenses", icon: CreditCard, label: "Expenses" },
     ]
   },

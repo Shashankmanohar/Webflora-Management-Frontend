@@ -27,6 +27,8 @@ import AdminActivityView from "./pages/AdminActivityView";
 import ExpenseManagement from "./pages/ExpenseManagement";
 import Leads from "./pages/Leads";
 import Quotations from "./pages/Quotations";
+import Agreements from "./pages/Agreements";
+import CreateEditAgreement from "./pages/CreateEditAgreement";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +78,9 @@ const App = () => (
                       <Route path="/expenses" element={<ExpenseManagement />} />
                       <Route path="/leads" element={<Leads />} />
                       <Route path="/quotations" element={<Quotations />} />
+                      <Route path="/agreements" element={<Agreements />} />
+                      <Route path="/agreements/new" element={<CreateEditAgreement />} />
+                      <Route path="/agreements/edit/:id" element={<CreateEditAgreement />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </RoleBasedLayout>

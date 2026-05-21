@@ -80,4 +80,14 @@ export const API_ENDPOINTS = {
     QUOTATION_CREATE: '/api/quotation/create',
     QUOTATION_UPDATE: (id: string) => `/api/quotation/update/${id}`,
     QUOTATION_DELETE: (id: string) => `/api/quotation/delete/${id}`,
+
+    // Agreement
+    AGREEMENT_BASE: '/api/agreement',
+    AGREEMENT_ALL: '/api/agreement/all',
+    AGREEMENT_CREATE: '/api/agreement/create',
+    AGREEMENT_UPDATE: (id: string) => `/api/agreement/update/${id}`,
+    AGREEMENT_DELETE: (id: string) => `/api/agreement/delete/${id}`,
+    AGREEMENT_DUPLICATE: (id: string) => `/api/agreement/duplicate/${id}`,
+    AGREEMENT_SEND: (id: string) => `/api/agreement/send/${id}`,
+    AGREEMENT_ESIGN: (id: string) => `/api/agreement/esign/${id}`,
 } as const;
