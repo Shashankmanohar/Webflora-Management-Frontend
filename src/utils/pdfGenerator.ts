@@ -462,21 +462,37 @@ export const generateQuotationPDF = (quotation: any) => {
         unit: "mm",
         format: "a4"
     });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297
+    const margin = 16;
+    const cardWidth = pageWidth - 2 * margin; // 178
+    const maxContentY = 265; // Safe bottom margin
 
-    // Background watermarks and outer border frame
+    let y = 18;
+
+    // Draw background watermark on Page 1 first
     drawSecurityWatermark(doc, "SECURED WEBFLORA ESTIMATION");
-    drawPageBorder(doc);
 
-    // 1. Branding Header
-    drawCorporateHeaderLogo(doc, 20, 18);
+    // Helper: Add page and reset y
+    const checkPageBreak = (neededHeight: number) => {
+        if (y + neededHeight > maxContentY) {
+            doc.addPage();
+            // Draw background watermark immediately on the new blank page
+            drawSecurityWatermark(doc, "SECURED WEBFLORA ESTIMATION");
+            y = 22; // Start on new page
+            return true;
+        }
+        return false;
+    };
 
-    // Company details (Right aligned, Elegant Slate Text)
+    // 1. Branding Header (drawn on first page)
+    drawCorporateHeaderLogo(doc, margin, y);
+
+    // Company Details (Right aligned)
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.text("Webflora Technologies Private Limited", pageWidth - 20, 20, { align: "right" });
+    doc.text("Webflora Technologies Private Limited", pageWidth - margin, y + 2, { align: "right" });
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
@@ -484,102 +500,297 @@ export const generateQuotationPDF = (quotation: any) => {
         "IOC Colony, Kumhrar, Patna, Bihar, 800026",
         "Email: hello.webflora@gmail.com",
         "Website: www.webfloratechnologies.com"
-    ], pageWidth - 20, 24, { align: "right", lineHeightFactor: 1.3 });
+    ], pageWidth - margin, y + 6, { align: "right", lineHeightFactor: 1.3 });
+
+    y += 22;
 
     // Divider Line
     doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
     doc.setLineWidth(0.4);
-    doc.line(20, 40, pageWidth - 20, 40);
+    doc.line(margin, y, pageWidth - margin, y);
 
-    // 2. Document Title & Key Meta
-    doc.setFontSize(18);
+    y += 9;
+
+    // 2. Document Title
+    doc.setFontSize(15);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.text("QUOTATION", 20, 52);
+    doc.text("DEVELOPMENT ESTIMATION & QUOTATION", margin, y);
 
-    // Document Meta Block (Side-by-side with Lead Info)
-    const metaY = 60;
+    y += 7;
+
+    // Document Meta Block (Side-by-side with Client info)
     doc.setFillColor(SLATE_50_RGB[0], SLATE_50_RGB[1], SLATE_50_RGB[2]);
-    doc.rect(20, metaY, 80, 28, "F");
+    doc.rect(margin, y, 84, 28, "F");
     doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
     doc.setLineWidth(0.35);
-    doc.rect(20, metaY, 80, 28, "S");
+    doc.rect(margin, y, 84, 28, "S");
 
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
     doc.setFont("helvetica", "bold");
-    doc.text("QUOTATION DETAILS", 24, metaY + 6);
+    doc.text("QUOTATION METADATA", margin + 4, y + 6);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.text(`Quotation No :  ${quotation.quotationNo || "WF-QT-N/A"}`, 24, metaY + 12);
-    doc.text(`Created Date :  ${formatDate(quotation.date)}`, 24, metaY + 17);
+    doc.text(`Quotation No :  ${quotation.quotationNo || "WF-QTN-N/A"}`, margin + 4, y + 12);
+    doc.text(`Created Date :  ${formatDate(quotation.date)}`, margin + 4, y + 17);
     if (quotation.validUntil) {
-        doc.text(`Valid Dues  :  ${formatDate(quotation.validUntil)}`, 24, metaY + 22);
+        doc.text(`Valid Until  :  ${formatDate(quotation.validUntil)}`, margin + 4, y + 22);
     } else {
-        doc.text("Validity Period:  30 Days from date", 24, metaY + 22);
+        doc.text("Validity Period:  30 Days from date", margin + 4, y + 22);
     }
 
-    // 3. Lead Info (Client Address block)
+    // Quoted To client block
     doc.setFillColor(SLATE_50_RGB[0], SLATE_50_RGB[1], SLATE_50_RGB[2]);
-    doc.rect(pageWidth - 100, metaY, 80, 28, "F");
+    doc.rect(pageWidth - margin - 84, y, 84, 28, "F");
     doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
-    doc.rect(pageWidth - 100, metaY, 80, 28, "S");
+    doc.rect(pageWidth - margin - 84, y, 84, 28, "S");
+
+    doc.setFontSize(8);
+    doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("PREPARED FOR CLIENT", pageWidth - margin - 80, y + 6);
 
     doc.setFontSize(8.5);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text("QUOTED TO PARTNER", pageWidth - 96, metaY + 6);
-
-    doc.setFontSize(9);
-    doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    const leadName = quotation.leadId?.leadName || "Valued Customer Partner";
-    doc.text(leadName.substring(0, 38), pageWidth - 96, metaY + 12);
+    const clientName = quotation.leadId?.leadName || "Valued Client";
+    doc.text(clientName.substring(0, 36), pageWidth - margin - 80, y + 12);
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
     if (quotation.leadId?.email) {
-        doc.text(quotation.leadId.email.substring(0, 42), pageWidth - 96, metaY + 17);
+        doc.text(quotation.leadId.email.substring(0, 40), pageWidth - margin - 80, y + 17);
     } else {
-        doc.text("Corporate Technical Lead Client", pageWidth - 96, metaY + 17);
+        doc.text("Corporate Technical Lead Client", pageWidth - margin - 80, y + 17);
     }
     if (quotation.leadId?.contactNumber) {
-        doc.text(`Contact: ${quotation.leadId.contactNumber}`, pageWidth - 96, metaY + 22);
+        doc.text(`Mobile: ${quotation.leadId.contactNumber}`, pageWidth - margin - 80, y + 22);
     } else {
-        doc.text("Verified Identity Dues Record", pageWidth - 96, metaY + 22);
+        doc.text("Verified Identity Dues Record", pageWidth - margin - 80, y + 22);
     }
 
-    // 4. Items Table
-    const tableColumn = ["Service Stage", "Description / Modules", "Qty", "Unit Cost", "Subtotal (INR)"];
-    const tableRows = quotation.items.map((item: any) => [
-        item.service || "IT Service Solution",
-        item.description || "Standard platform architecture sprints implementation.",
-        item.quantity || "1",
+    y += 35;
+
+    // 3. Project Details
+    checkPageBreak(30);
+    drawSectionHeader(doc, "01. PROJECT OVERVIEW & PROJECT DETAILS", margin, y, 9.5);
+    y += 7;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+    doc.text("Project Title : ", margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+    doc.text(quotation.projectName || "Custom Digital Application Development", margin + 22, y);
+
+    y += 5.5;
+    doc.setFont("helvetica", "bold");
+    doc.text("Project Type  : ", margin, y);
+    doc.setFont("helvetica", "normal");
+    doc.text(quotation.projectType || "Website Development", margin + 22, y);
+
+    if (quotation.projectOverview) {
+        y += 7;
+        doc.setFont("helvetica", "bold");
+        doc.text("Project Description & Objectives:", margin, y);
+        y += 4.5;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const splitOverview = doc.splitTextToSize(quotation.projectOverview, cardWidth);
+        for (let line of splitOverview) {
+            checkPageBreak(5);
+            doc.text(line, margin, y);
+            y += 4;
+        }
+        y += 2;
+    } else {
+        y += 5;
+    }
+
+    // 4. Scope of Work
+    y += 4;
+    checkPageBreak(30);
+    drawSectionHeader(doc, "02. DETAILED SCOPE OF WORK", margin, y, 9.5);
+    y += 7;
+
+    const scopeVal = quotation.scopeOfWork || "• Standard visual engineering sprints.\n• Modular features assembly.\n• Responsive layout execution.";
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+    const splitScope = doc.splitTextToSize(scopeVal, cardWidth);
+    for (let line of splitScope) {
+        checkPageBreak(5);
+        doc.text(line, margin, y);
+        y += 4;
+    }
+    y += 6;
+
+    // 5. Checklists (Website Pages & Admin features Checklist)
+    checkPageBreak(40);
+    drawSectionHeader(doc, "03. WEBPAGE MODULES & ADMINISTRATIVE FUNCTIONS", margin, y, 9.5);
+    y += 7;
+
+    const hasPages = quotation.websitePages && quotation.websitePages.length > 0;
+    const hasFeats = quotation.adminPanelFeatures && quotation.adminPanelFeatures.length > 0;
+
+    let checklistRows: any[] = [];
+    const maxLen = Math.max(
+        hasPages ? quotation.websitePages.length : 0,
+        hasFeats ? quotation.adminPanelFeatures.length : 0
+    );
+
+    for (let i = 0; i < maxLen; i++) {
+        const pageItem = hasPages && quotation.websitePages[i] 
+            ? {
+                content: `${quotation.websitePages[i].page}  ${quotation.websitePages[i].included ? "[Included]" : "[Excluded]"}`,
+                styles: {
+                    textColor: quotation.websitePages[i].included ? [22, 163, 74] : [148, 163, 184],
+                    fontStyle: quotation.websitePages[i].included ? 'bold' : 'normal'
+                }
+              }
+            : "";
+        const featItem = hasFeats && quotation.adminPanelFeatures[i]
+            ? {
+                content: `${quotation.adminPanelFeatures[i].feature}  ${quotation.adminPanelFeatures[i].included ? "[Included]" : "[Excluded]"}`,
+                styles: {
+                    textColor: quotation.adminPanelFeatures[i].included ? [22, 163, 74] : [148, 163, 184],
+                    fontStyle: quotation.adminPanelFeatures[i].included ? 'bold' : 'normal'
+                }
+              }
+            : "";
+        checklistRows.push([pageItem, featItem]);
+    }
+
+    autoTable(doc, {
+        startY: y,
+        head: [["Website / Inner Pages Checklist", "Admin Dashboard Features Checklist"]],
+        body: checklistRows,
+        theme: "plain",
+        styles: {
+            fontSize: 7.5,
+            cellPadding: { top: 3, right: 3, bottom: 3, left: 3 },
+            textColor: [71, 85, 105],
+            valign: 'middle'
+        },
+        columnStyles: {
+            0: { cellWidth: cardWidth / 2 },
+            1: { cellWidth: cardWidth / 2 },
+        },
+        headStyles: {
+            fillColor: [30, 41, 59], // Slate 800 Navy
+            textColor: [255, 255, 255],
+            fontStyle: "bold",
+            halign: 'left'
+        },
+        alternateRowStyles: {
+            fillColor: [248, 250, 252],
+        },
+        margin: { left: margin, right: margin },
+    });
+
+    y = (doc as any).lastAutoTable?.finalY || (y + 20);
+    y += 10;
+
+    // 6. Timeline section
+    checkPageBreak(30);
+    drawSectionHeader(doc, "04. DEVELOPMENT SPRINT TIMELINE Stages", margin, y, 9.5);
+    y += 7;
+
+    const timelineRows = (quotation.timeline || []).map((t: any) => [
+        t.stage,
+        `${t.days} Days`
+    ]);
+
+    if (timelineRows.length > 0) {
+        autoTable(doc, {
+            startY: y,
+            head: [["Timeline Development Phase", "Duration (Days)"]],
+            body: timelineRows,
+            theme: "plain",
+            styles: {
+                fontSize: 7.5,
+                cellPadding: 3,
+                textColor: [71, 85, 105]
+            },
+            headStyles: {
+                fillColor: [71, 85, 105],
+                textColor: [255, 255, 255],
+                fontStyle: "bold"
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252],
+            },
+            margin: { left: margin, right: margin }
+        });
+        y = (doc as any).lastAutoTable?.finalY || (y + 20);
+        y += 10;
+    } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text("• Development timeline: Approximately 15-20 business days from advance mobilization payment.", margin, y);
+        y += 8;
+    }
+
+    // 7. Deliverables
+    checkPageBreak(35);
+    drawSectionHeader(doc, "05. SYSTEM DELIVERABLES LIST", margin, y, 9.5);
+    y += 7;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+
+    const deliverablesVal = quotation.deliverables || [
+        "Responsive web architecture",
+        "Admin control system",
+        "100% source code repository transfer",
+        "SEO architecture",
+        "SSL integration"
+    ];
+
+    for (let d of deliverablesVal) {
+        checkPageBreak(5);
+        doc.text(`•  ${d}`, margin + 2, y);
+        y += 4.5;
+    }
+    y += 6;
+
+    // 8. Cost breakdown / Financial Investment
+    checkPageBreak(40);
+    drawSectionHeader(doc, "06. FINANCIAL INVESTMENT BREAKDOWN", margin, y, 9.5);
+    y += 7;
+
+    const pricingRows = quotation.items.map((item: any, index: number) => [
+        String(index + 1),
+        item.service || "Technical Development",
+        item.quantity || 1,
         formatCurrency(item.price || 0),
         formatCurrency(item.amount || 0)
     ]);
 
     autoTable(doc, {
-        startY: 96,
-        head: [tableColumn],
-        body: tableRows,
+        startY: y,
+        head: [["S.No", "Description / Modules", "Qty", "Unit Cost", "Subtotal (INR)"]],
+        body: pricingRows,
         theme: "plain",
         styles: {
-            fontSize: 8,
-            cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
+            fontSize: 7.5,
+            cellPadding: 3.5,
             textColor: [71, 85, 105],
             valign: 'middle'
         },
         columnStyles: {
-            0: { cellWidth: 35 },
+            0: { cellWidth: 12, halign: 'center' },
             1: { cellWidth: 'auto' },
             2: { cellWidth: 15, halign: 'center' },
             3: { cellWidth: 32, halign: 'right' },
             4: { cellWidth: 32, halign: 'right' },
         },
         headStyles: {
-            fillColor: [30, 41, 59], // Slate 800 Navy
+            fillColor: [30, 41, 59],
             textColor: [255, 255, 255],
             fontStyle: "bold",
             halign: 'center'
@@ -587,63 +798,158 @@ export const generateQuotationPDF = (quotation: any) => {
         alternateRowStyles: {
             fillColor: [248, 250, 252],
         },
-        margin: { left: 20, right: 20 },
+        margin: { left: margin, right: margin }
     });
 
-    // 5. Financial Summary & Notes
-    const finalY = (doc as any).lastAutoTable?.finalY || 130;
+    y = (doc as any).lastAutoTable?.finalY || (y + 20);
+    y += 6;
+
+    // 9. Additional AMC services (Optional)
+    const addServices = quotation.additionalServices || [];
+    if (addServices.length > 0) {
+        checkPageBreak(30);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+        doc.text("Additional / Recurring Maintenance Services:", margin, y);
+        y += 4.5;
+
+        const addRows = addServices.map((as: any) => [
+            as.service,
+            formatCurrency(as.price)
+        ]);
+
+        autoTable(doc, {
+            startY: y,
+            head: [["Service Description", "Billing Cost (INR)"]],
+            body: addRows,
+            theme: "plain",
+            styles: {
+                fontSize: 7.5,
+                cellPadding: 3,
+                textColor: [71, 85, 105]
+            },
+            headStyles: {
+                fillColor: [100, 116, 139],
+                textColor: [255, 255, 255]
+            },
+            margin: { left: margin, right: margin }
+        });
+        y = (doc as any).lastAutoTable?.finalY || (y + 15);
+        y += 6;
+    }
+
+    // 10. Grand total block
+    checkPageBreak(20);
     const totalAmount = Number(quotation.totalAmount || 0);
-
-    const boxY = finalY + 10;
-
     doc.setFillColor(ORANGE_50_RGB[0], ORANGE_50_RGB[1], ORANGE_50_RGB[2]);
-    doc.rect(pageWidth - 85, boxY, 65, 16, "F");
-    doc.setDrawColor(254, 215, 170);
-    doc.rect(pageWidth - 85, boxY, 65, 16, "S");
+    doc.rect(pageWidth - margin - 75, y, 75, 14, "F");
+    doc.setDrawColor(254, 215, 170); // Orange 200
+    doc.rect(pageWidth - margin - 75, y, 75, 14, "S");
 
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+    doc.text("Estimated Investment Total :", pageWidth - margin - 70, y + 8.5);
+    doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
+    doc.text(formatCurrency(totalAmount), pageWidth - margin - 5, y + 8.5, { align: "right" });
+
+    y += 20;
+
+    // 11. Payment terms & T&C
+    checkPageBreak(35);
     doc.setFontSize(8.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.text("Estimated Dues :", pageWidth - 80, boxY + 10);
-    doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
-    doc.text(formatCurrency(totalAmount), pageWidth - 25, boxY + 10, { align: "right" });
+    doc.text("PAYMENT METHOD & OFFER PROTOCOLS", margin, y);
+    y += 5.5;
 
-    // Terms / Protocols (graceful fallback)
-    doc.setFontSize(8.5);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.text("OFFER TERMS & PROTOCOLS", 20, boxY + 5);
-    
     doc.setFont("helvetica", "normal");
+    doc.setFontSize(7.5);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.setFontSize(8);
-    
-    if (quotation.notes && quotation.notes.trim()) {
-        const splitNotes = doc.splitTextToSize(quotation.notes, 95);
-        doc.text(splitNotes, 20, boxY + 11, { lineHeightFactor: 1.4 });
-    } else {
-        doc.text([
-            "1. Standard payment split: 50% advance mobilization deposit, 50% on completion.",
-            "2. Development commences immediately on receiving final approved graphic layouts.",
-            "3. Ongoing support services run under separate visual SLA retainer agreements."
-        ], 20, boxY + 11, { lineHeightFactor: 1.4 });
+
+    const payTerms = quotation.paymentTerms && quotation.paymentTerms.length > 0
+        ? quotation.paymentTerms
+        : [
+            "50% advance mobilization deposit to initiate project design sprints",
+            "30% upon visual frontend presentation and design confirmation",
+            "20% before server deployment and source code transfer"
+        ];
+
+    const tcs = quotation.termsAndConditions && quotation.termsAndConditions.length > 0
+        ? quotation.termsAndConditions
+        : [
+            "Source code and administrative passwords will be handed over only after full settlement of payment.",
+            "Development timeline will commence immediately after receipt of the advance mobilization payment.",
+            "Up to three rounds of visual layout reviews are included. Additional updates are billable."
+        ];
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Payment Schedule:", margin, y);
+    doc.setFont("helvetica", "normal");
+    y += 4.5;
+    for (let pt of payTerms) {
+        checkPageBreak(5);
+        doc.text(`•  ${pt}`, margin + 4, y);
+        y += 4;
     }
 
-    // 6. Professional Footer
-    doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
-    doc.setLineWidth(0.4);
-    doc.line(20, pageHeight - 20, pageWidth - 20, pageHeight - 20);
-
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-    doc.text("This estimation is a formal draft proposal valid under the specified date guidelines.", pageWidth / 2, pageHeight - 14, { align: "center" });
-
+    y += 2;
+    checkPageBreak(15);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
-    doc.text("Looking forward to building a premium digital environment with you!", pageWidth / 2, pageHeight - 9, { align: "center" });
+    doc.text("Terms & Conditions:", margin, y);
+    doc.setFont("helvetica", "normal");
+    y += 4.5;
+    for (let tc of tcs) {
+        checkPageBreak(5);
+        doc.text(`•  ${tc}`, margin + 4, y);
+        y += 4;
+    }
 
-    doc.save(`Quotation_${quotation.quotationNo || '000'}.pdf`);
+    y += 6;
+
+    // 12. Signatures Block
+    checkPageBreak(30);
+    doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
+    doc.setLineWidth(0.35);
+    doc.line(margin, y, pageWidth - margin, y);
+
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+    doc.text("PREPARED BY (WEBFLORA):", margin, y);
+    doc.text("ACCEPTED BY (CLIENT REPRESENTATIVE):", pageWidth - margin - 70, y);
+
+    y += 13;
+    doc.line(margin, y, margin + 45, y);
+    doc.line(pageWidth - margin - 70, y, pageWidth - margin - 25, y);
+
+    y += 3.5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+    doc.text("Authorized Signatory", margin, y);
+    doc.text("Date & Signature stamp", pageWidth - margin - 70, y);
+
+    // ==========================================
+    // POST-RENDER PAGE STAMPING (BORDERS, WATERMARKS, PAGE NUMBERS)
+    // ==========================================
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawPageBorder(doc);
+
+        // Footer Text
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+        doc.text(`SECURED DOCUMENT  •  PAGE ${i} OF ${totalPages}`, margin, pageHeight - 10);
+        doc.text("WEBFLORA TECHNOLOGIES PRIVATE LIMITED", pageWidth - margin, pageHeight - 10, { align: "right" });
+    }
+
+    // Save with unique ID
+    doc.save(`WF_Quotation_${quotation.quotationNo || "000"}.pdf`);
 };
 
 // =========================================================================
