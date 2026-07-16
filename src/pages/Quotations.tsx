@@ -650,31 +650,107 @@ const Quotations = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Project Name *</Label>
-              <Input
-                value={formData.projectName}
-                onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                placeholder="e.g. WebFlora E-Commerce Website"
-                required
-              />
+          <div className="space-y-2">
+            <Label>Project Name *</Label>
+            <Input
+              value={formData.projectName}
+              onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
+              placeholder="e.g. WebFlora E-Commerce Website"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold">Project Types (Select multiple or add custom)</Label>
+            
+            {/* Selected Types Badges */}
+            <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 border rounded-md bg-slate-50/50">
+              {(formData.projectType ? formData.projectType.split(", ").filter(Boolean) : []).map((type, idx) => (
+                <Badge key={idx} variant="secondary" className="flex items-center gap-1 bg-primary/10 text-primary border-primary/20 text-[10px]">
+                  {type}
+                  <X
+                    className="h-2.5 w-2.5 cursor-pointer hover:text-destructive"
+                    onClick={() => {
+                      const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+                      const updated = current.filter(t => t !== type);
+                      setFormData({ ...formData, projectType: updated.join(", ") });
+                    }}
+                  />
+                </Badge>
+              ))}
+              {(formData.projectType ? formData.projectType.split(", ").filter(Boolean) : []).length === 0 && (
+                <span className="text-[11px] text-muted-foreground self-center">No types selected yet.</span>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Project Type</Label>
-              <Select value={formData.projectType} onValueChange={(v) => setFormData({ ...formData, projectType: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Website Development">Website Development</SelectItem>
-                  <SelectItem value="Mobile App Development">Mobile App Development</SelectItem>
-                  <SelectItem value="ERP System">ERP System</SelectItem>
-                  <SelectItem value="SEO & Marketing">SEO & Marketing</SelectItem>
-                  <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                  <SelectItem value="Custom Software">Custom Software</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* Quick Select Buttons */}
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {[
+                "Website Development",
+                "Mobile App Development",
+                "ERP System",
+                "SEO & Marketing",
+                "UI/UX Design",
+                "Custom Software"
+              ].map((type) => {
+                const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+                const isSelected = current.includes(type);
+                return (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant={isSelected ? "default" : "outline"}
+                    className="h-6 text-[10px] px-2"
+                    onClick={() => {
+                      const updated = isSelected
+                        ? current.filter(t => t !== type)
+                        : [...current, type];
+                      setFormData({ ...formData, projectType: updated.join(", ") });
+                    }}
+                  >
+                    {type}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Custom Type Input */}
+            <div className="flex gap-2 mt-1.5 max-w-sm">
+              <Input
+                id="custom-project-type"
+                placeholder="Custom Type (e.g. CRM System)"
+                className="h-7 text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val) {
+                      const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+                      if (!current.includes(val)) {
+                        setFormData({ ...formData, projectType: [...current, val].join(", ") });
+                      }
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                className="h-7 text-xs px-3"
+                onClick={() => {
+                  const el = document.getElementById("custom-project-type") as HTMLInputElement;
+                  const val = el?.value.trim();
+                  if (val) {
+                    const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+                    if (!current.includes(val)) {
+                      setFormData({ ...formData, projectType: [...current, val].join(", ") });
+                    }
+                    el.value = "";
+                  }
+                }}
+              >
+                Add
+              </Button>
             </div>
           </div>
 
