@@ -629,80 +629,148 @@ export const generateQuotationPDF = (quotation: any) => {
     y += 6;
 
     // 5. Checklists (Website Pages & Admin features Checklist)
-    checkPageBreak(40);
-    drawSectionHeader(doc, "03. WEBPAGE MODULES & ADMINISTRATIVE FUNCTIONS", margin, y, 9.5);
-    y += 7;
+    const isPureSeo = (type: string) => {
+        if (!type) return false;
+        const normalized = type.toLowerCase();
+        return normalized.includes("seo") && 
+            !normalized.includes("website") && 
+            !normalized.includes("app") && 
+            !normalized.includes("erp") && 
+            !normalized.includes("software");
+    };
 
-    const hasPages = quotation.websitePages && quotation.websitePages.length > 0;
-    const hasFeats = quotation.adminPanelFeatures && quotation.adminPanelFeatures.length > 0;
+    const skipChecklists = isPureSeo(quotation.projectType);
 
-    let checklistRows: any[] = [];
-    const maxLen = Math.max(
-        hasPages ? quotation.websitePages.length : 0,
-        hasFeats ? quotation.adminPanelFeatures.length : 0
-    );
+    if (!skipChecklists) {
+        checkPageBreak(40);
+        drawSectionHeader(doc, "03. WEBPAGE MODULES & ADMINISTRATIVE FUNCTIONS", margin, y, 9.5);
+        y += 7;
 
-    for (let i = 0; i < maxLen; i++) {
-        const pageItem = hasPages && quotation.websitePages[i] 
-            ? {
-                content: `${quotation.websitePages[i].page}  ${quotation.websitePages[i].included ? "[Included]" : "[Excluded]"}`,
-                styles: {
-                    textColor: quotation.websitePages[i].included ? [22, 163, 74] : [148, 163, 184],
-                    fontStyle: quotation.websitePages[i].included ? 'bold' : 'normal'
-                }
-              }
-            : "";
-        const featItem = hasFeats && quotation.adminPanelFeatures[i]
-            ? {
-                content: `${quotation.adminPanelFeatures[i].feature}  ${quotation.adminPanelFeatures[i].included ? "[Included]" : "[Excluded]"}`,
-                styles: {
-                    textColor: quotation.adminPanelFeatures[i].included ? [22, 163, 74] : [148, 163, 184],
-                    fontStyle: quotation.adminPanelFeatures[i].included ? 'bold' : 'normal'
-                }
-              }
-            : "";
-        checklistRows.push([pageItem, featItem]);
+        const hasPages = quotation.websitePages && quotation.websitePages.length > 0;
+        const hasFeats = quotation.adminPanelFeatures && quotation.adminPanelFeatures.length > 0;
+
+        let checklistRows: any[] = [];
+        const maxLen = Math.max(
+            hasPages ? quotation.websitePages.length : 0,
+            hasFeats ? quotation.adminPanelFeatures.length : 0
+        );
+
+        for (let i = 0; i < maxLen; i++) {
+            const pageItem = hasPages && quotation.websitePages[i] 
+                ? {
+                    content: `${quotation.websitePages[i].page}  ${quotation.websitePages[i].included ? "[Included]" : "[Excluded]"}`,
+                    styles: {
+                        textColor: quotation.websitePages[i].included ? [22, 163, 74] : [148, 163, 184],
+                        fontStyle: quotation.websitePages[i].included ? 'bold' : 'normal'
+                    }
+                  }
+                : "";
+            const featItem = hasFeats && quotation.adminPanelFeatures[i]
+                ? {
+                    content: `${quotation.adminPanelFeatures[i].feature}  ${quotation.adminPanelFeatures[i].included ? "[Included]" : "[Excluded]"}`,
+                    styles: {
+                        textColor: quotation.adminPanelFeatures[i].included ? [22, 163, 74] : [148, 163, 184],
+                        fontStyle: quotation.adminPanelFeatures[i].included ? 'bold' : 'normal'
+                    }
+                  }
+                : "";
+            checklistRows.push([pageItem, featItem]);
+        }
+
+        const getChecklistHeaders = (type: string) => {
+            if (!type) return ["Website / Inner Pages Checklist", "Admin Dashboard Features Checklist"];
+            const normalized = type.toLowerCase();
+            if (normalized.includes("app")) {
+                return ["Mobile App Screens Checklist", "Admin / API Features Checklist"];
+            } else if (normalized.includes("erp")) {
+                return ["ERP Modules Checklist", "System Control Features"];
+            } else if (normalized.includes("design")) {
+                return ["Design Screens & Wireframes", "UX Assets & Prototypes Checklist"];
+            } else if (normalized.includes("software")) {
+                return ["Custom Modules Checklist", "Admin Panel & Security Config"];
+            }
+            return ["Website / Inner Pages Checklist", "Admin Dashboard Features Checklist"];
+        };
+
+        const headers = getChecklistHeaders(quotation.projectType);
+
+        autoTable(doc, {
+            startY: y,
+            head: [headers],
+            body: checklistRows,
+            theme: "plain",
+            styles: {
+                fontSize: 7.5,
+                cellPadding: { top: 3, right: 3, bottom: 3, left: 3 },
+                textColor: [71, 85, 105],
+                valign: 'middle'
+            },
+            columnStyles: {
+                0: { cellWidth: cardWidth / 2 },
+                1: { cellWidth: cardWidth / 2 },
+            },
+            headStyles: {
+                fillColor: [30, 41, 59], // Slate 800 Navy
+                textColor: [255, 255, 255],
+                fontStyle: "bold",
+                halign: 'left'
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252],
+            },
+            margin: { left: margin, right: margin },
+        });
+
+        y = (doc as any).lastAutoTable?.finalY || (y + 20);
+        y += 10;
     }
-
-    autoTable(doc, {
-        startY: y,
-        head: [["Website / Inner Pages Checklist", "Admin Dashboard Features Checklist"]],
-        body: checklistRows,
-        theme: "plain",
-        styles: {
-            fontSize: 7.5,
-            cellPadding: { top: 3, right: 3, bottom: 3, left: 3 },
-            textColor: [71, 85, 105],
-            valign: 'middle'
-        },
-        columnStyles: {
-            0: { cellWidth: cardWidth / 2 },
-            1: { cellWidth: cardWidth / 2 },
-        },
-        headStyles: {
-            fillColor: [30, 41, 59], // Slate 800 Navy
-            textColor: [255, 255, 255],
-            fontStyle: "bold",
-            halign: 'left'
-        },
-        alternateRowStyles: {
-            fillColor: [248, 250, 252],
-        },
-        margin: { left: margin, right: margin },
-    });
-
-    y = (doc as any).lastAutoTable?.finalY || (y + 20);
-    y += 10;
 
     // 6. Timeline section
     checkPageBreak(30);
     drawSectionHeader(doc, "04. DEVELOPMENT SPRINT TIMELINE Stages", margin, y, 9.5);
     y += 7;
 
-    const timelineRows = (quotation.timeline || []).map((t: any) => [
+    let timelineRows = (quotation.timeline || []).map((t: any) => [
         t.stage,
         `${t.days} Days`
     ]);
+
+    if (timelineRows.length === 0) {
+        const normalized = (quotation.projectType || "").toLowerCase();
+        let defaultTimeline: any[] = [];
+        if (normalized.includes("seo")) {
+            defaultTimeline = [
+                { stage: "Audit & Keyword Research", days: 7 },
+                { stage: "On-Page Optimization", days: 15 },
+                { stage: "Technical & Core Web Vitals Fixes", days: 10 }
+            ];
+        } else if (normalized.includes("app")) {
+            defaultTimeline = [
+                { stage: "UI/UX App Wireframing", days: 7 },
+                { stage: "API & Backend Construction", days: 10 },
+                { stage: "Cross-Platform Mobile Coding", days: 15 }
+            ];
+        } else if (normalized.includes("erp")) {
+            defaultTimeline = [
+                { stage: "Requirement Mapping & Architecture Design", days: 10 },
+                { stage: "Database Model & Core System Coding", days: 15 },
+                { stage: "Custom Modules Implementation", days: 20 }
+            ];
+        } else if (normalized.includes("design")) {
+            defaultTimeline = [
+                { stage: "Research & Brand Discovery", days: 4 },
+                { stage: "Low-Fidelity Wireframes", days: 6 },
+                { stage: "High-Fidelity Mockups Development", days: 8 }
+            ];
+        } else {
+            defaultTimeline = [
+                { stage: "UI/UX Design", days: 5 },
+                { stage: "Development", days: 10 },
+                { stage: "Testing & Deployment", days: 3 }
+            ];
+        }
+        timelineRows = defaultTimeline.map((t: any) => [t.stage, `${t.days} Days`]);
+    }
 
     if (timelineRows.length > 0) {
         autoTable(doc, {
@@ -743,13 +811,46 @@ export const generateQuotationPDF = (quotation: any) => {
     doc.setFontSize(8);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
 
-    const deliverablesVal = quotation.deliverables || [
-        "Responsive web architecture",
-        "Admin control system",
-        "100% source code repository transfer",
-        "SEO architecture",
-        "SSL integration"
-    ];
+    let deliverablesVal = quotation.deliverables || [];
+    if (deliverablesVal.length === 0 || deliverablesVal.every((d: string) => !d.trim())) {
+        const normalized = (quotation.projectType || "").toLowerCase();
+        if (normalized.includes("seo")) {
+            deliverablesVal = [
+                "SEO Technical Audit Document",
+                "Keyword Research & Target Strategy Map",
+                "GA4 & Search Console Account Integration",
+                "On-page Schema Markup Implementation",
+                "First Month Optimization & Rank Report"
+            ];
+        } else if (normalized.includes("app")) {
+            deliverablesVal = [
+                "iOS App Bundle (IPA File/TestFlight Release)",
+                "Android App Package (APK/AAB Store Bundle)",
+                "Server API Source Code Setup",
+                "Admin Dashboard Panel Access"
+            ];
+        } else if (normalized.includes("erp")) {
+            deliverablesVal = [
+                "Secure Private Cloud ERP Deployment",
+                "Modular ERP Source Code Transfer",
+                "Custom Database Structure Schemas"
+            ];
+        } else if (normalized.includes("design")) {
+            deliverablesVal = [
+                "Figma Source File (Link & Access)",
+                "High-Resolution Visual Page Exports",
+                "Developer Specifications Hand-Off Document"
+            ];
+        } else {
+            deliverablesVal = [
+                "Responsive web architecture",
+                "Admin control system",
+                "100% source code repository transfer",
+                "SEO architecture",
+                "SSL integration"
+            ];
+        }
+    }
 
     for (let d of deliverablesVal) {
         checkPageBreak(5);
@@ -868,21 +969,57 @@ export const generateQuotationPDF = (quotation: any) => {
     doc.setFontSize(7.5);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
 
-    const payTerms = quotation.paymentTerms && quotation.paymentTerms.length > 0
-        ? quotation.paymentTerms
-        : [
-            "50% advance mobilization deposit to initiate project design sprints",
-            "30% upon visual frontend presentation and design confirmation",
-            "20% before server deployment and source code transfer"
-        ];
+    let payTerms = quotation.paymentTerms || [];
+    const isDefaultPayTerms = payTerms.length === 0 || payTerms.every((pt: string) => !pt.trim() || pt.includes("sprints") || pt.includes("frontend presentation"));
+    
+    if (isDefaultPayTerms) {
+        const normalized = (quotation.projectType || "").toLowerCase();
+        if (normalized.includes("seo")) {
+            payTerms = [
+                "100% advance monthly retainer payment to initiate optimization cycles.",
+                "Monthly invoices are due within the first 5 business days of each service cycle.",
+                "A minimum contract term of 3 months is recommended for ranking index build-up."
+            ];
+        } else if (normalized.includes("design")) {
+            payTerms = [
+                "50% advance mobilization deposit to initiate visual design discovery and wireframes.",
+                "50% upon final presentation and design mockups hand-off."
+            ];
+        } else {
+            payTerms = [
+                "50% advance mobilization deposit to initiate project design sprints.",
+                "30% upon visual frontend presentation and design confirmation.",
+                "20% before server deployment and source code transfer."
+            ];
+        }
+    }
 
-    const tcs = quotation.termsAndConditions && quotation.termsAndConditions.length > 0
-        ? quotation.termsAndConditions
-        : [
-            "Source code and administrative passwords will be handed over only after full settlement of payment.",
-            "Development timeline will commence immediately after receipt of the advance mobilization payment.",
-            "Up to three rounds of visual layout reviews are included. Additional updates are billable."
-        ];
+    let tcs = quotation.termsAndConditions || [];
+    const isDefaultTcs = tcs.length === 0 || tcs.every((tc: string) => !tc.trim() || tc.includes("Source code") || tc.includes("visual layout reviews"));
+    
+    if (isDefaultTcs) {
+        const normalized = (quotation.projectType || "").toLowerCase();
+        if (normalized.includes("seo")) {
+            tcs = [
+                "Search engine rankings are subject to Google algorithm updates and competitive index changes.",
+                "Monthly optimization actions commence immediately after receipt of advance retainer payment.",
+                "Analytics accounts, GSC logs, and CMS website admin access must be provided by the client.",
+                "Any modifications to page URLs or canonical configurations by the client's team must be pre-approved."
+            ];
+        } else if (normalized.includes("design")) {
+            tcs = [
+                "Visual interface design mockups source files will be delivered upon final milestone clearance.",
+                "Up to three rounds of wireframe layout revisions are included in this design phase.",
+                "Specialized stock media, typography licenses, or vector icon packs are billed at cost."
+            ];
+        } else {
+            tcs = [
+                "Source code and administrative passwords will be handed over only after full settlement of payment.",
+                "Development timeline will commence immediately after receipt of the advance mobilization payment.",
+                "Up to three rounds of visual layout reviews are included. Additional updates are billable."
+            ];
+        }
+    }
 
     doc.setFont("helvetica", "bold");
     doc.text("Payment Schedule:", margin, y);

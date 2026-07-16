@@ -155,6 +155,243 @@ const Quotations = () => {
     notes: "",
   });
 
+  const isPureSeoProject = (() => {
+    const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+    return current.includes("SEO & Marketing") && 
+      !current.some(t => ["Website Development", "Mobile App Development", "ERP System", "Custom Software"].includes(t));
+  })();
+
+  const getFormChecklistHeaders = () => {
+    const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
+    if (current.includes("Mobile App Development")) {
+      return { left: "Mobile App Screens Checklist", right: "Admin / API Features Checklist" };
+    } else if (current.includes("ERP System")) {
+      return { left: "ERP Modules Checklist", right: "System Control Features Checklist" };
+    } else if (current.includes("UI/UX Design")) {
+      return { left: "Design Screens & Wireframes", right: "UX Assets & Prototypes Checklist" };
+    } else if (current.includes("Custom Software")) {
+      return { left: "Custom Modules Checklist", right: "Admin Panel & Security Config" };
+    }
+    return { left: "Website Pages Checklist", right: "Admin Panel Features Checklist" };
+  };
+
+  const formHeaders = getFormChecklistHeaders();
+
+  const adjustDefaultsForProjectType = (typesArray: string[]) => {
+    if (typesArray.includes("Mobile App Development")) {
+      return {
+        scopeOfWork: "• Native / Cross-Platform Mobile Application Development (iOS & Android).\n• Elegant Splash Screen & User Onboarding Flows.\n• Secure Mobile Authentication & User Profile Management.\n• Real-Time Push Notification Engine Integration.\n• Secure In-App Payment Gateway Integration.\n• Offline Data Synchronization Capabilities.",
+        timeline: [
+          { stage: "UI/UX App Wireframing", days: 7 },
+          { stage: "API & Backend Construction", days: 10 },
+          { stage: "Cross-Platform Mobile Coding", days: 15 },
+          { stage: "App Store & Play Store Release", days: 6 }
+        ],
+        deliverables: [
+          "iOS App Bundle (IPA File/TestFlight Release)",
+          "Android App Package (APK/AAB Store Bundle)",
+          "Server API Source Code & Schema Setup",
+          "Admin Dashboard Panel Access",
+          "App Store Submission Support & Guidelines"
+        ],
+        websitePages: [
+          { page: "Splash Onboarding", included: true },
+          { page: "Sign In / Sign Up Screen", included: true },
+          { page: "User Profile View", included: true },
+          { page: "Core Home Dashboard", included: true },
+          { page: "Product details Screen", included: true },
+          { page: "Advanced Search & Filter", included: true },
+          { page: "Shopping Cart Module", included: true },
+          { page: "Payment Checkout View", included: true },
+          { page: "App Settings & Push Toggle", included: true },
+          { page: "Help & Technical Feedback", included: true }
+        ],
+        adminPanelFeatures: [
+          { feature: "Dashboard Overview", included: true },
+          { feature: "Manage Registered Users", included: true },
+          { feature: "Push Notification Scheduler", included: true },
+          { feature: "Transaction & Payment Logs", included: true },
+          { feature: "Enquiry & Support Tickets", included: true },
+          { feature: "Logout session", included: true }
+        ]
+      };
+    } else if (typesArray.includes("ERP System")) {
+      return {
+        scopeOfWork: "• Fully integrated custom ERP system for internal corporate workflows.\n• Modular business processes automation.\n• Symmetrical database schema for high transactional integrity.\n• Role-based Access Control (RBAC) setup.\n• Real-time automated reporting tools.",
+        timeline: [
+          { stage: "Requirement Mapping & Architecture Design", days: 10 },
+          { stage: "Database Model & Core System Coding", days: 15 },
+          { stage: "Custom Modules Implementation", days: 20 },
+          { stage: "Integration Testing & Staff Training", days: 8 }
+        ],
+        deliverables: [
+          "Secure Private Cloud ERP Deployment",
+          "Modular ERP Source Code Transfer",
+          "Custom Database Structure Schemas",
+          "ERP Operations Training Manual",
+          "3-Month Free Support SLA Agreement"
+        ],
+        websitePages: [
+          { page: "ERP Central Dashboard", included: true },
+          { page: "HR & Employee Portal", included: true },
+          { page: "Inventory & Warehouse Stock", included: true },
+          { page: "Sales & Client CRM Module", included: true },
+          { page: "Purchase & Vendor Manager", included: true },
+          { page: "Finance Ledger Accounts", included: true },
+          { page: "Reports & Analytics Wizard", included: true },
+          { page: "Access Control Settings", included: true }
+        ],
+        adminPanelFeatures: [
+          { feature: "System Configurations", included: true },
+          { feature: "Audit logs & Activity Monitor", included: true },
+          { feature: "User Role Controller (RBAC)", included: true },
+          { feature: "Automated Backup Scheduler", included: true },
+          { feature: "API Access Keys Console", included: true },
+          { feature: "Logout Session", included: true }
+        ]
+      };
+    } else if (typesArray.includes("Custom Software")) {
+      return {
+        scopeOfWork: "• Bespoke custom software solution tailored to specific client technical requirements.\n• Advanced custom database configuration.\n• High-security data transmission layers.\n• Interactive dashboards and query interfaces.",
+        timeline: [
+          { stage: "System Modeling & DB Design", days: 7 },
+          { stage: "Custom Backend Engine Dev", days: 18 },
+          { stage: "UI Dashboard Integration", days: 12 },
+          { stage: "User Acceptance Testing (UAT)", days: 5 }
+        ],
+        deliverables: [
+          "Custom Software Executables / Web URL",
+          "Complete Repository Source Code",
+          "Technical & API Reference Documentation",
+          "Automated DB Backups Routine Setup",
+          "System Administration Training"
+        ],
+        websitePages: [
+          { page: "Main Operations Portal", included: true },
+          { page: "User Management Module", included: true },
+          { page: "Interactive Data Grid Views", included: true },
+          { page: "Digital Document Repository", included: true },
+          { page: "Billing & Transaction Controller", included: true },
+          { page: "Bespoke Report Customizer", included: true },
+          { page: "Global Alerts Panel", included: true },
+          { page: "Account Settings Panel", included: true }
+        ],
+        adminPanelFeatures: [
+          { feature: "Global Software Settings", included: true },
+          { feature: "Access Control Console (RBAC)", included: true },
+          { feature: "Custom Query Executor", included: true },
+          { feature: "System Integrity Logs", included: true },
+          { feature: "Logout Session", included: true }
+        ]
+      };
+    } else if (typesArray.includes("UI/UX Design")) {
+      return {
+        scopeOfWork: "• Professional UI/UX wireframing and pixel-perfect high-fidelity interface design.\n• Symmetrical branding and style guide creation.\n• Interactive prototype development in Figma.",
+        timeline: [
+          { stage: "Research & Brand Discovery", days: 4 },
+          { stage: "Low-Fidelity Wireframes", days: 6 },
+          { stage: "High-Fidelity Mockups Development", days: 8 },
+          { stage: "Figma Prototyping & Design Revisions", days: 4 }
+        ],
+        deliverables: [
+          "Figma Source File (Link & Access)",
+          "High-Resolution Visual Page Exports",
+          "Developer Specifications Hand-Off Document",
+          "Custom System UI Style Guide",
+          "Interactive Figma Prototype Link"
+        ],
+        websitePages: [
+          { page: "Moodboards & Typography Scales", included: true },
+          { page: "Low-fidelity wireframe flows", included: true },
+          { page: "High-fidelity UI Screens Mockup", included: true },
+          { page: "Design System Elements UI", included: true },
+          { page: "Interactive Screen Prototypes", included: true },
+          { page: "Custom Vector Logo & Brand Assets", included: true }
+        ],
+        adminPanelFeatures: []
+      };
+    } else if (typesArray.includes("SEO & Marketing")) {
+      return {
+        scopeOfWork: "• Comprehensive Technical SEO audit and competitor analysis.\n• Keyword research, mapping, and core keyword strategy.\n• On-page optimization including meta tags, title tags, heading structure, and image alt text.\n• Core Web Vitals audit and page speed recommendation implementation.\n• Google Analytics 4 and Google Search Console integration and dashboard setup.\n• Monthly rank tracking and traffic growth reports.",
+        timeline: [
+          { stage: "Audit & Keyword Research", days: 7 },
+          { stage: "On-Page Optimization", days: 15 },
+          { stage: "Technical & Core Web Vitals Fixes", days: 10 },
+          { stage: "Analytics Integration & Schema Markup", days: 5 }
+        ],
+        deliverables: [
+          "SEO Technical Audit Document",
+          "Keyword Research & Target Strategy Map",
+          "GA4 & Search Console Account Integration",
+          "On-page Schema Markup Implementation",
+          "First Month Optimization & Rank Report"
+        ],
+        websitePages: [],
+        adminPanelFeatures: []
+      };
+    } else {
+      return {
+        scopeOfWork: "",
+        timeline: [
+          { stage: "UI/UX Design", days: 5 },
+          { stage: "Development", days: 10 },
+          { stage: "Testing & Deployment", days: 3 }
+        ],
+        deliverables: [
+          "Responsive Website",
+          "Admin Dashboard Access",
+          "Source Code Delivery",
+          "Basic SEO Setup",
+          "SSL Configuration",
+          "Deployment Support",
+          "1-Hour Training Session"
+        ],
+        websitePages: [
+          { page: "Home", included: true },
+          { page: "About Us", included: true },
+          { page: "Why Choose Us", included: true },
+          { page: "Our Strength", included: true },
+          { page: "Our Journey", included: true },
+          { page: "Vision & Mission", included: true },
+          { page: "Value", included: true },
+          { page: "Promoters & Directors", included: true },
+          { page: "Certification", included: true },
+          { page: "Our Products", included: true },
+          { page: "Quality & Nutrition", included: true },
+          { page: "Quality Control Process", included: true },
+          { page: "In House Laboratory", included: true },
+          { page: "Raw Materials Standards", included: true },
+          { page: "Scientific Formulation", included: true },
+          { page: "Feed Safety Consistency", included: true },
+          { page: "FAQs on FCR, Growth Nutrition", included: true },
+          { page: "Manufacturing", included: true },
+          { page: "Knowledge Centre", included: true },
+          { page: "Dealer Support", included: true },
+          { page: "Become a Dealer", included: true },
+          { page: "Channel Partner Benefits", included: true },
+          { page: "Farmer Support Program", included: true },
+          { page: "Bulk Order Enquiry", included: true },
+          { page: "Technical Guidance", included: true },
+          { page: "Brochure", included: true },
+          { page: "Our Gallery", included: true },
+          { page: "Career", included: true },
+          { page: "Enquiry", included: true },
+          { page: "Contact Us", included: true },
+          { page: "Product Mock Design", included: true }
+        ],
+        adminPanelFeatures: [
+          { feature: "Dashboard", included: true },
+          { feature: "Manage Enquiry", included: true },
+          { feature: "Manage Gallery", included: true },
+          { feature: "Manage Careers", included: true },
+          { feature: "Manage Rates of Product", included: true },
+          { feature: "Manage Notifications", included: true },
+          { feature: "Logout", included: true }
+        ]
+      };
+    }
+  };
+
   const { data: quotations = [], isLoading, error } = useQuotations();
   const { data: leads = [] } = useLeads();
   const createQuotation = useCreateQuotation();
@@ -673,7 +910,12 @@ const Quotations = () => {
                     onClick={() => {
                       const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
                       const updated = current.filter(t => t !== type);
-                      setFormData({ ...formData, projectType: updated.join(", ") });
+                      const adjustments = adjustDefaultsForProjectType(updated);
+                      setFormData({
+                        ...formData,
+                        projectType: updated.join(", "),
+                        ...adjustments
+                      });
                     }}
                   />
                 </Badge>
@@ -705,7 +947,12 @@ const Quotations = () => {
                       const updated = isSelected
                         ? current.filter(t => t !== type)
                         : [...current, type];
-                      setFormData({ ...formData, projectType: updated.join(", ") });
+                      const adjustments = adjustDefaultsForProjectType(updated);
+                      setFormData({
+                        ...formData,
+                        projectType: updated.join(", "),
+                        ...adjustments
+                      });
                     }}
                   >
                     {type}
@@ -727,7 +974,13 @@ const Quotations = () => {
                     if (val) {
                       const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
                       if (!current.includes(val)) {
-                        setFormData({ ...formData, projectType: [...current, val].join(", ") });
+                        const updated = [...current, val];
+                        const adjustments = adjustDefaultsForProjectType(updated);
+                        setFormData({
+                          ...formData,
+                          projectType: updated.join(", "),
+                          ...adjustments
+                        });
                       }
                       (e.target as HTMLInputElement).value = "";
                     }
@@ -743,7 +996,13 @@ const Quotations = () => {
                   if (val) {
                     const current = formData.projectType ? formData.projectType.split(", ").filter(Boolean) : [];
                     if (!current.includes(val)) {
-                      setFormData({ ...formData, projectType: [...current, val].join(", ") });
+                      const updated = [...current, val];
+                      const adjustments = adjustDefaultsForProjectType(updated);
+                      setFormData({
+                        ...formData,
+                        projectType: updated.join(", "),
+                        ...adjustments
+                      });
                     }
                     el.value = "";
                   }
@@ -790,85 +1049,92 @@ const Quotations = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 border-t pt-3">
-            {/* Pages Checklist */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Website Pages Checklist</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newPageName}
-                  onChange={(e) => setNewPageName(e.target.value)}
-                  placeholder="Page Name"
-                  className="h-7 text-xs"
-                />
-                <Button type="button" size="sm" onClick={addWebsitePage} className="h-7">Add</Button>
-              </div>
-              <div className="border rounded-md p-2 space-y-1.5 max-h-[160px] overflow-y-auto bg-slate-50/50">
-                {formData.websitePages.map((page, index) => (
-                  <div key={index} className="flex items-center justify-between py-0.5 border-b border-slate-100 last:border-0">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`page-${index}`}
-                        checked={page.included}
-                        onCheckedChange={() => toggleWebsitePage(index)}
-                      />
-                      <label htmlFor={`page-${index}`} className="text-xs font-medium cursor-pointer">
-                        {page.page}
-                      </label>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeWebsitePage(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+          {isPureSeoProject ? (
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center bg-slate-50/50 mt-3">
+              <p className="text-sm font-medium text-slate-500">Website Checklist Disabled</p>
+              <p className="text-xs text-slate-400 mt-1">This quotation is configured for a pure SEO & Marketing project. Website pages and admin panel modules checklists are hidden.</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 border-t pt-3">
+              {/* Pages Checklist */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">{formHeaders.left}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newPageName}
+                    onChange={(e) => setNewPageName(e.target.value)}
+                    placeholder="Page Name"
+                    className="h-7 text-xs"
+                  />
+                  <Button type="button" size="sm" onClick={addWebsitePage} className="h-7">Add</Button>
+                </div>
+                <div className="border rounded-md p-2 space-y-1.5 max-h-[160px] overflow-y-auto bg-slate-50/50">
+                  {formData.websitePages.map((page, index) => (
+                    <div key={index} className="flex items-center justify-between py-0.5 border-b border-slate-100 last:border-0">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`page-${index}`}
+                          checked={page.included}
+                          onCheckedChange={() => toggleWebsitePage(index)}
+                        />
+                        <label htmlFor={`page-${index}`} className="text-xs font-medium cursor-pointer">
+                          {page.page}
+                        </label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeWebsitePage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            {/* Admin Checklist */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Admin Panel Features Checklist</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newFeatureName}
-                  onChange={(e) => setNewFeatureName(e.target.value)}
-                  placeholder="Module/Feature"
-                  className="h-7 text-xs"
-                />
-                <Button type="button" size="sm" onClick={addAdminFeature} className="h-7">Add</Button>
-              </div>
-              <div className="border rounded-md p-2 space-y-1.5 max-h-[160px] overflow-y-auto bg-slate-50/50">
-                {formData.adminPanelFeatures.map((feat, index) => (
-                  <div key={index} className="flex items-center justify-between py-0.5 border-b border-slate-100 last:border-0">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`feat-${index}`}
-                        checked={feat.included}
-                        onCheckedChange={() => toggleAdminFeature(index)}
-                      />
-                      <label htmlFor={`feat-${index}`} className="text-xs font-medium cursor-pointer">
-                        {feat.feature}
-                      </label>
+              {/* Admin Checklist */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">{formHeaders.right}</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newFeatureName}
+                    onChange={(e) => setNewFeatureName(e.target.value)}
+                    placeholder="Module/Feature"
+                    className="h-7 text-xs"
+                  />
+                  <Button type="button" size="sm" onClick={addAdminFeature} className="h-7">Add</Button>
+                </div>
+                <div className="border rounded-md p-2 space-y-1.5 max-h-[160px] overflow-y-auto bg-slate-50/50">
+                  {formData.adminPanelFeatures.map((feat, index) => (
+                    <div key={index} className="flex items-center justify-between py-0.5 border-b border-slate-100 last:border-0">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`feat-${index}`}
+                          checked={feat.included}
+                          onCheckedChange={() => toggleAdminFeature(index)}
+                        />
+                        <label htmlFor={`feat-${index}`} className="text-xs font-medium cursor-pointer">
+                          {feat.feature}
+                        </label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeAdminFeature(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeAdminFeature(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </TabsContent>
 
         {/* Tab 3: Timeline & Deliverables */}
