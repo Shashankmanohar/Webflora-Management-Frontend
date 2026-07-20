@@ -1692,17 +1692,46 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
     doc.text("FOR: WEBFLORA TECHNOLOGIES", leftCardX + 4, y2 + 4.5);
 
-
+    const companyStampY = y2 + 9;
+    const isCompanySigned = agreement.digitalSignature?.signStatus === "Signed";
+    if (isCompanySigned && agreement.digitalSignature?.signatureData) {
+        try {
+            doc.addImage(agreement.digitalSignature.signatureData, "PNG", leftCardX + 2, companyStampY - 2, 62, 23);
+        } catch (e) {
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+            doc.setFontSize(8);
+            doc.text("Digitally Signed", leftCardX + 6, companyStampY + 8);
+        }
+    } else {
+        // Awaiting Signature frame
+        doc.saveGraphicsState();
+        doc.setDrawColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+        doc.setLineWidth(0.35);
+        (doc as any).setLineDashPattern([2, 1.5], 0);
+        doc.rect(leftCardX + 5, companyStampY + 1, 56, 17, "S");
+        (doc as any).setLineDashPattern([], 0); // Reset
+        
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(7);
+        doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+        doc.text("Awaiting Webflora Sign", leftCardX + 33, companyStampY + 10.5, { align: "center" });
+        doc.restoreGraphicsState();
+    }
 
     // Representative details
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.text(companyAuthRep, leftCardX + 4, y2 + sigCardHeight - 7.5);
+    const companySigneeName = agreement.digitalSignature?.signedBy || companyAuthRep;
+    doc.text(companySigneeName, leftCardX + 4, y2 + sigCardHeight - 7.5);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.text(`MD  •  ${companySignDate}`, leftCardX + 4, y2 + sigCardHeight - 3.5);
+    const finalCompanySignDate = agreement.digitalSignature?.signedAt 
+        ? formatDateToText(agreement.digitalSignature.signedAt, companySignDate)
+        : companySignDate;
+    doc.text(`${companyAuthDesig}  •  ${finalCompanySignDate}`, leftCardX + 4, y2 + sigCardHeight - 3.5);
 
     // Right Signature Card (Party B - Client)
     doc.setFillColor(SLATE_50_RGB[0], SLATE_50_RGB[1], SLATE_50_RGB[2]);
@@ -1720,39 +1749,26 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.text(`FOR: ${clientCompanyName.toUpperCase()}`, rightCardX + 4, y2 + 4.5);
 
     const clientStampY = y2 + 9;
-    const isSignedStatus = agreement.digitalSignature?.signStatus === "Signed";
-    if (isSignedStatus && agreement.digitalSignature?.signatureData) {
-        try {
-            doc.addImage(agreement.digitalSignature.signatureData, "PNG", rightCardX + 6, clientStampY, 54, 15);
-        } catch (e) {
-            doc.setFont("helvetica", "italic");
-            doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-            doc.setFontSize(8);
-            doc.text("Digitally Signed", rightCardX + 6, clientStampY + 8);
-        }
-    } else {
-        // Awaiting Signature frame
-        doc.saveGraphicsState();
-        doc.setDrawColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-        doc.setLineWidth(0.35);
-        // Dashed outline
-        (doc as any).setLineDashPattern([2, 1.5], 0);
-        doc.rect(rightCardX + 5, clientStampY + 1, 56, 17, "S");
-        (doc as any).setLineDashPattern([], 0); // Reset
-        
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(7);
-        doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-        doc.text("Awaiting Secure Client E-Sign Assent", rightCardX + 33, clientStampY + 10.5, { align: "center" });
-        doc.restoreGraphicsState();
-    }
+    // Always Awaiting Client Signature
+    doc.saveGraphicsState();
+    doc.setDrawColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+    doc.setLineWidth(0.35);
+    // Dashed outline
+    (doc as any).setLineDashPattern([2, 1.5], 0);
+    doc.rect(rightCardX + 5, clientStampY + 1, 56, 17, "S");
+    (doc as any).setLineDashPattern([], 0); // Reset
+    
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+    doc.text("Awaiting Secure Client E-Sign Assent", rightCardX + 33, clientStampY + 10.5, { align: "center" });
+    doc.restoreGraphicsState();
 
     // Client Representative details
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    const clientSigneeName = agreement.digitalSignature?.signedBy || clientName;
-    doc.text(clientSigneeName, rightCardX + 4, y2 + sigCardHeight - 7.5);
+    doc.text(clientName, rightCardX + 4, y2 + sigCardHeight - 7.5);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
