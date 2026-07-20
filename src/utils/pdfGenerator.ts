@@ -1274,22 +1274,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     // -------------------------------------------------------------------------
     // PAGE 1 ASSEMBLY
     // -------------------------------------------------------------------------
-    drawSecurityWatermark(doc, "SECURED WEBFLORA LEGAL CONTRACT");
-    drawPageBorder(doc);
-
-    // 1. Top Meta Header
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-    doc.text("AGREEMENT ID: " + (agreement.agreementId || "WT-AGR-2026-0006"), 24, 15);
-    doc.text("WEBFLORA LEGAL ARCHIVES  •  SECURED DIGITAL CONTRACT", pageWidth - 24, 15, { align: "right" });
-    
-    // Thin horizontal line under Top Meta
-    doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
-    doc.setLineWidth(0.4);
-    doc.line(24, 17, pageWidth - 24, 17);
-
-    // 2. Corporate Brand Header
+    // 2. Corporate Brand Header (Borders, watermarks, headers & footers are drawn at the end)
     drawCorporateHeaderLogo(doc, 24, 21);
 
     // Right-aligned company registry
@@ -1334,6 +1319,17 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.line(24, 52, 24 + 40, 52);
 
     let y = 59;
+
+    const printParagraph = (lines: string[], x: number, lineSpacingVal: number) => {
+        for (const line of lines) {
+            if (y + lineSpacingVal > pageHeight - 22) {
+                doc.addPage();
+                y = 23;
+            }
+            doc.text(line, x, y);
+            y += lineSpacingVal;
+        }
+    };
 
     // -------------------------------------------------------------
     // STACKED ROW-WISE PARTY CARDS (With auto-wrapped grids)
@@ -1455,10 +1451,14 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFontSize(fontSize);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
     const splitScopeDesc = doc.splitTextToSize(projectScopeDescVal, cardWidth);
-    doc.text(splitScopeDesc, 24, y, { lineHeightFactor: textLineHeight });
-    y += splitScopeDesc.length * (fontSize * 0.42) + 4.5;
+    printParagraph(splitScopeDesc, 24, lineSpacing);
+    y += 4.5;
 
     // Clause 1. Scope of Work (Plain narrative block under Section 1)
+    if (y + 10 > pageHeight - 22) {
+        doc.addPage();
+        y = 23;
+    }
     doc.setFont("helvetica", "bold");
     doc.setFontSize(fontSize + 0.5);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
@@ -1469,12 +1469,16 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFontSize(fontSize);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
     const splitScope = doc.splitTextToSize(scopeText, cardWidth);
-    doc.text(splitScope, 24, y, { lineHeightFactor: textLineHeight });
-    y += splitScope.length * (fontSize * 0.42) + gapSpacing;
+    printParagraph(splitScope, 24, lineSpacing);
+    y += gapSpacing;
 
     // -------------------------------------------------------------
     // SECTION 02: TIMELINE (With brand accent orange border)
     // -------------------------------------------------------------
+    if (y + durationCardHeight + 15 > pageHeight - 22) {
+        doc.addPage();
+        y = 23;
+    }
     drawSectionHeader(doc, "02. PROJECT TIMELINE & DELIVERY SCHEDULE", 24, y, fontSize + 0.8);
     y += 5;
 
@@ -1505,6 +1509,10 @@ export const generateAgreementPDF = async (agreement: any) => {
     // -------------------------------------------------------------
     // SECTION 03: FINANCIAL STRUCTURE & PRICING ROWS
     // -------------------------------------------------------------
+    if (y + financialCardHeight + 15 > pageHeight - 22) {
+        doc.addPage();
+        y = 23;
+    }
     drawSectionHeader(doc, "03. FINANCIAL STRUCTURE & PAYMENT COMPLIANCE", 24, y, fontSize + 0.8);
     y += 5;
 
@@ -1566,21 +1574,10 @@ export const generateAgreementPDF = async (agreement: any) => {
         doc.text(formatCurrency(grandTotal), pageWidth - 28, y + 16.5, { align: "right" });
     }
 
-    // Decorative page footer for Page 1
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-    doc.text("CLASSIFIED RECORD  •  PAGE 1 OF 2", 24, pageHeight - 14);
-    doc.text("DIGITALLY SIGNED UNDER ELECTRONIC RECORDS & CONTRACT LAWS", pageWidth - 24, pageHeight - 14, { align: "right" });
-
-
     // -------------------------------------------------------------------------
     // PAGE 2: COVENANTS, MUTUAL SIGNATURES & CORPORATE SEALS
     // -------------------------------------------------------------------------
     doc.addPage();
-
-    drawSecurityWatermark(doc, "SECURED WEBFLORA LEGAL CONTRACT");
-    drawPageBorder(doc);
 
     let y2 = 23;
     drawSectionHeader(doc, "05. COVENANTS & GENERAL LEGAL COMPLIANCE", 24, y2, fontSize + 0.8);
@@ -1639,6 +1636,10 @@ export const generateAgreementPDF = async (agreement: any) => {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(p2FontSize + 0.5);
         doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+        if (y2 + p2FontSize * 0.4 + 1.2 > pageHeight - 22) {
+            doc.addPage();
+            y2 = 23;
+        }
         doc.text(`${c.num}. ${c.title}`, 24, y2);
         y2 += p2FontSize * 0.4 + 1.2;
 
@@ -1646,13 +1647,18 @@ export const generateAgreementPDF = async (agreement: any) => {
         doc.setFontSize(p2FontSize);
         doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
         const splitText = doc.splitTextToSize(c.text, cardWidth);
-        doc.text(splitText, 24, y2, { lineHeightFactor: textLineHeight });
-        y2 += splitText.length * (p2FontSize * 0.42) + 3.8;
+        for (const line of splitText) {
+            if (y2 + p2FontSize * 0.42 > pageHeight - 22) {
+                doc.addPage();
+                y2 = 23;
+            }
+            doc.text(line, 24, y2);
+            y2 += p2FontSize * 0.42;
+        }
+        y2 += 3.8;
     });
 
     y2 += 2.5;
-    drawSectionHeader(doc, "06. MUTUAL ELECTRONIC SIGNATURE & VALIDATION CERTIFICATE", 24, y2, fontSize + 0.8);
-    y2 += 8;
 
     // Draw Symmetrical Signature Cards (Side-by-side with QR validation)
     const sigCardWidth = 66;
@@ -1662,6 +1668,13 @@ export const generateAgreementPDF = async (agreement: any) => {
     const rightCardX = pageWidth - 24 - sigCardWidth;
     const qrX = leftCardX + sigCardWidth + 5;
     const qrWidth = gap - 10; // 20mm
+
+    if (y2 + sigCardHeight + 15 > pageHeight - 22) {
+        doc.addPage();
+        y2 = 23;
+    }
+    drawSectionHeader(doc, "06. MUTUAL ELECTRONIC SIGNATURE & VALIDATION CERTIFICATE", 24, y2, fontSize + 0.8);
+    y2 += 8;
 
     // Left Signature Card (Party A - Webflora Technologies)
     doc.setFillColor(SLATE_50_RGB[0], SLATE_50_RGB[1], SLATE_50_RGB[2]);
@@ -1754,12 +1767,33 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
     doc.text("VERIFIED SECURE", qrX + qrWidth/2, y2 + qrWidth + 10.5, { align: "center" });
 
-    // Decorative page footer for Page 2
-    doc.setFontSize(7.5);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-    doc.text("CLASSIFIED RECORD  •  PAGE 2 OF 2", 24, pageHeight - 14);
-    doc.text("DIGITALLY SIGNED UNDER ELECTRONIC RECORDS & CONTRACT LAWS", pageWidth - 24, pageHeight - 14, { align: "right" });
+    // Post-process all pages to add uniform borders, headers, footers and watermarks
+    const totalPages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        
+        // Border
+        drawPageBorder(doc);
+        
+        // Top Meta Header
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+        doc.text("AGREEMENT ID: " + (agreement.agreementId || "WT-AGR-2026-0006"), 24, 15);
+        doc.text("WEBFLORA LEGAL ARCHIVES  •  SECURED DIGITAL CONTRACT", pageWidth - 24, 15, { align: "right" });
+        
+        // Thin horizontal line under Top Meta
+        doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
+        doc.setLineWidth(0.4);
+        doc.line(24, 17, pageWidth - 24, 17);
+        
+        // Page Footer
+        doc.setFontSize(7.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
+        doc.text(`CLASSIFIED RECORD  •  PAGE ${i} OF ${totalPages}`, 24, pageHeight - 14);
+        doc.text("DIGITALLY SIGNED UNDER ELECTRONIC RECORDS & CONTRACT LAWS", pageWidth - 24, pageHeight - 14, { align: "right" });
+    }
 
     // Save with unique ID
     doc.save(`IT_Agreement_${agreement.agreementId}.pdf`);
