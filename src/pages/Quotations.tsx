@@ -524,14 +524,44 @@ const Quotations = () => {
     }));
   };
 
-  const addAdditionalService = () => {
-    if (!newAddServiceName.trim()) return;
+  const checkIsMonthly = (item: any) => {
+    if (typeof item?.isMonthly === "boolean") return item.isMonthly;
+    return /monthly|\/mo|\/month/i.test(item?.service || "");
+  };
+
+  const toggleItemMonthly = (index: number) => {
+    const newItems = [...formData.items];
+    const currentMonthly = checkIsMonthly(newItems[index]);
+    newItems[index] = {
+      ...newItems[index],
+      isMonthly: !currentMonthly
+    };
+    setFormData(prev => ({ ...prev, items: newItems }));
+  };
+
+  const toggleAdditionalServiceMonthly = (index: number) => {
+    const newAdd = [...formData.additionalServices];
+    const currentMonthly = checkIsMonthly(newAdd[index]);
+    newAdd[index] = {
+      ...newAdd[index],
+      isMonthly: !currentMonthly
+    };
+    setFormData(prev => ({ ...prev, additionalServices: newAdd }));
+  };
+
+  const addAdditionalService = (isMonthly = false) => {
+    if (!newAddServiceName.trim() && !newAddServicePrice) return;
+    const name = newAddServiceName.trim() || (isMonthly ? "Monthly Maintenance Charge" : "Additional Service");
     setFormData(prev => ({
       ...prev,
-      additionalServices: [...prev.additionalServices, { service: newAddServiceName.trim(), price: Number(newAddServicePrice) || 0 }]
+      additionalServices: [...prev.additionalServices, { service: name, price: Number(newAddServicePrice) || 0, isMonthly }]
     }));
     setNewAddServiceName("");
     setNewAddServicePrice(0);
+  };
+
+  const addMonthlyCharge = () => {
+    addAdditionalService(true);
   };
 
   const removeAdditionalService = (index: number) => {
@@ -565,7 +595,14 @@ const Quotations = () => {
   const addItem = () => {
     setFormData({
       ...formData,
-      items: [...formData.items, { service: "", description: "", quantity: 1, price: 0, amount: 0 }]
+      items: [...formData.items, { service: "", description: "", quantity: 1, price: 0, amount: 0, isMonthly: false }]
+    });
+  };
+
+  const addMonthlyItem = () => {
+    setFormData({
+      ...formData,
+      items: [...formData.items, { service: "Services Charge", description: "", quantity: 1, price: 0, amount: 0, isMonthly: true }]
     });
   };
 
@@ -1216,101 +1253,155 @@ const Quotations = () => {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">Estimation Items *</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7">
-                <Plus className="w-3 h-3 mr-1" /> Add Cost Item
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" /> Add Cost Item
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addMonthlyItem}
+                  className="h-7 text-xs border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Add Monthly Charge
+                </Button>
+              </div>
             </div>
             <div className="space-y-2 max-h-[160px] overflow-y-auto">
-              {formData.items.map((item, index) => (
-                <div key={index} className="grid grid-cols-12 gap-2 items-start p-2 border rounded-lg bg-muted/20">
-                  <div className="col-span-5 space-y-0.5">
-                    <Label className="text-[9px]">Service/Module</Label>
-                    <Input
-                      placeholder="Service"
-                      value={item.service}
-                      onChange={(e) => handleItemChange(index, "service", e.target.value)}
-                      required
-                      className="h-7 text-xs"
-                    />
+              {formData.items.map((item, index) => {
+                const isMonthly = checkIsMonthly(item);
+                return (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-start p-2 border rounded-lg bg-muted/20">
+                    <div className="col-span-5 space-y-0.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[9px]">Service/Module</Label>
+                        <button
+                          type="button"
+                          onClick={() => toggleItemMonthly(index)}
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-semibold transition-all cursor-pointer border ${
+                            isMonthly
+                              ? "bg-orange-500 text-white border-orange-600 shadow-sm"
+                              : "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 hover:border-slate-300"
+                          }`}
+                        >
+                          {isMonthly ? "✓ Monthly" : "+ Set Monthly"}
+                        </button>
+                      </div>
+                      <Input
+                        placeholder="Service"
+                        value={item.service}
+                        onChange={(e) => handleItemChange(index, "service", e.target.value)}
+                        required
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="col-span-3 space-y-0.5">
+                      <Label className="text-[9px]">Price (₹)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={item.price || ""}
+                        onChange={(e) => handleItemChange(index, "price", e.target.value === "" ? 0 : Number(e.target.value))}
+                        required
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="col-span-2 space-y-0.5">
+                      <Label className="text-[9px]">Qty</Label>
+                      <Input
+                        type="number"
+                        placeholder="Qty"
+                        value={item.quantity || ""}
+                        onChange={(e) => handleItemChange(index, "quantity", e.target.value === "" ? 0 : Number(e.target.value))}
+                        required
+                        className="h-7 text-xs"
+                      />
+                    </div>
+                    <div className="col-span-1 text-right pt-4">
+                      <div className="text-xs font-bold">{formatCurrency(item.amount)}{isMonthly ? "/mo" : ""}</div>
+                    </div>
+                    <div className="col-span-1 pt-3 text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive animate-pulse"
+                        onClick={() => removeItem(index)}
+                        disabled={formData.items.length === 1}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="col-span-3 space-y-0.5">
-                    <Label className="text-[9px]">Price (₹)</Label>
-                    <Input
-                      type="number"
-                      placeholder="Price"
-                      value={item.price || ""}
-                      onChange={(e) => handleItemChange(index, "price", e.target.value === "" ? 0 : Number(e.target.value))}
-                      required
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-0.5">
-                    <Label className="text-[9px]">Qty</Label>
-                    <Input
-                      type="number"
-                      placeholder="Qty"
-                      value={item.quantity || ""}
-                      onChange={(e) => handleItemChange(index, "quantity", e.target.value === "" ? 0 : Number(e.target.value))}
-                      required
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div className="col-span-1 text-right pt-4">
-                    <div className="text-xs font-bold">{formatCurrency(item.amount)}</div>
-                  </div>
-                  <div className="col-span-1 pt-3 text-right">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive animate-pulse"
-                      onClick={() => removeItem(index)}
-                      disabled={formData.items.length === 1}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-2 border-t pt-3">
             <Label className="text-xs font-semibold">Additional Services / Annual Maintenance (AMC)</Label>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap sm:flex-nowrap">
               <Input
                 value={newAddServiceName}
                 onChange={(e) => setNewAddServiceName(e.target.value)}
                 placeholder="Hosting, AMC, Domain, etc."
-                className="h-7 text-xs"
+                className="h-7 text-xs flex-1"
               />
               <Input
                 type="number"
-                value={newAddServicePrice}
-                onChange={(e) => setNewAddServicePrice(Number(e.target.value))}
+                value={newAddServicePrice || ""}
+                onChange={(e) => setNewAddServicePrice(e.target.value === "" ? 0 : Number(e.target.value))}
                 placeholder="Price"
                 className="w-20 h-7 text-xs"
               />
-              <Button type="button" size="sm" onClick={addAdditionalService} className="h-7">Add Cost</Button>
+              <Button type="button" size="sm" onClick={() => addAdditionalService(false)} className="h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap">
+                Add Cost
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => addAdditionalService(true)}
+                className="h-7 text-xs border-orange-500/50 text-orange-500 hover:bg-orange-500/10 whitespace-nowrap"
+              >
+                + Monthly Charge
+              </Button>
             </div>
             <div className="border rounded-md p-2 space-y-1 bg-slate-50/50 max-h-[100px] overflow-y-auto">
-              {formData.additionalServices.map((service, index) => (
-                <div key={index} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
-                  <span>{service.service}</span>
-                  <div className="flex items-center gap-2 font-bold">
-                    <span>{formatCurrency(service.price)}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-5 w-5 text-destructive"
-                      onClick={() => removeAdditionalService(index)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+              {formData.additionalServices.map((service, index) => {
+                const isMonthly = checkIsMonthly(service);
+                return (
+                  <div key={index} className="flex items-center justify-between text-xs py-1 border-b last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span>{service.service}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleAdditionalServiceMonthly(index)}
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-semibold transition-all cursor-pointer border ${
+                          isMonthly
+                            ? "bg-orange-500 text-white border-orange-600 shadow-sm"
+                            : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 hover:border-slate-300"
+                        }`}
+                      >
+                        {isMonthly ? "✓ Monthly" : "+ Set Monthly"}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2 font-bold">
+                      <span>{formatCurrency(service.price)}{isMonthly ? " / mo" : ""}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-destructive"
+                        onClick={() => removeAdditionalService(index)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </TabsContent>

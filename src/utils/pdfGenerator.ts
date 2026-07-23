@@ -864,13 +864,22 @@ export const generateQuotationPDF = (quotation: any) => {
     drawSectionHeader(doc, "06. FINANCIAL INVESTMENT BREAKDOWN", margin, y, 9.5);
     y += 7;
 
-    const pricingRows = quotation.items.map((item: any, index: number) => [
-        String(index + 1),
-        item.service || "Technical Development",
-        item.quantity || 1,
-        formatCurrency(item.price || 0),
-        formatCurrency(item.amount || 0)
-    ]);
+    const isMonthlyItem = (item: any) => {
+        if (typeof item?.isMonthly === "boolean") return item.isMonthly;
+        return /monthly|\/mo|\/month/i.test(item?.service || "");
+    };
+
+    const pricingRows = quotation.items.map((item: any, index: number) => {
+        const isMonthly = isMonthlyItem(item);
+        const hasMonthlySuffix = /\/mo|\/month/i.test(item.service || "");
+        return [
+            String(index + 1),
+            item.service || "Technical Development",
+            item.quantity || 1,
+            formatCurrency(item.price || 0) + (isMonthly && !hasMonthlySuffix ? " / mo" : ""),
+            formatCurrency(item.amount || 0) + (isMonthly && !hasMonthlySuffix ? " / mo" : "")
+        ];
+    });
 
     autoTable(doc, {
         startY: y,
@@ -915,10 +924,14 @@ export const generateQuotationPDF = (quotation: any) => {
         doc.text("Additional / Recurring Maintenance Services:", margin, y);
         y += 4.5;
 
-        const addRows = addServices.map((as: any) => [
-            as.service,
-            formatCurrency(as.price)
-        ]);
+        const addRows = addServices.map((as: any) => {
+            const isMonthly = isMonthlyItem(as);
+            const hasMonthlySuffix = /\/mo|\/month/i.test(as.service || "");
+            return [
+                as.service,
+                formatCurrency(as.price) + (isMonthly && !hasMonthlySuffix ? " / mo" : "")
+            ];
+        });
 
         autoTable(doc, {
             startY: y,
