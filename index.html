@@ -3,30 +3,48 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- TODO: Set the document title to the name of your application -->
-  <title>Webflora Technologies</title>
-  <meta name="description" content="Efficiently manage floral operations with Webflora Management." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Webflora Management</title>
+  <meta name="description" content="Efficiently manage operations, projects, clients, and communications with Webflora Management." />
   <meta name="author" content="Shashank Manohar" />
 
+  <!-- PWA & Mobile Icons -->
   <link rel="icon" type="image/png" href="/minilogo.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme & PWA Settings -->
+  <meta name="theme-color" content="#FF5528" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Webflora" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:title" content="Webflora Management" />
-  <meta property="og:description" content="Efficiently manage floral operations with Webflora Management." />
+  <meta property="og:description" content="Efficiently manage operations, projects, clients, and communications with Webflora Management." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="/webfloralogo.png" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Webflora Management" />
-  <meta name="twitter:description" content="Efficiently manage floral operations with Webflora Management." />
+  <meta name="twitter:description" content="Efficiently manage operations with Webflora Management." />
   <meta name="twitter:image" content="/webfloralogo.png" />
 </head>
 
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+          .catch((err) => console.error('Service Worker registration failed:', err));
+      });
+    }
+  </script>
 </body>
 
 </html>

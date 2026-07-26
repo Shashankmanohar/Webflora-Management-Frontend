@@ -20,10 +20,12 @@ import {
   Banknote,
   History,
   CreditCard,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -89,7 +91,10 @@ const SidebarContent = ({
   location: any;
   isMobile: boolean;
   onClose?: () => void;
-}) => (
+}) => {
+  const { isInstallable, installPWA } = usePWAInstall();
+
+  return (
   <div className="flex flex-col h-full bg-sidebar border-r border-white/5 relative overflow-hidden">
     {/* Animated background glow */}
     <div className="absolute top-0 -left-20 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
@@ -188,6 +193,17 @@ const SidebarContent = ({
       )}
 
       <div className="space-y-1">
+        {isInstallable && (
+          <button
+            onClick={installPWA}
+            className="sidebar-item w-full bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-all font-semibold"
+            title="Install App"
+          >
+            <Download className="w-[18px] h-[18px] shrink-0 animate-bounce" />
+            {(!collapsed || isMobile) && <span>Install Desktop/Phone App</span>}
+          </button>
+        )}
+
         <button
           onClick={handleLogout}
           className="sidebar-item sidebar-item-inactive w-full text-destructive/80 hover:text-destructive hover:bg-destructive/10"
@@ -213,7 +229,8 @@ const SidebarContent = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 const AdminSidebar = ({ children }: AppSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
