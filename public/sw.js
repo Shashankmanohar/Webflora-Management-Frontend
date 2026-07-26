@@ -3,6 +3,7 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/webflora-logo.webp',
   '/webfloralogo.png',
   '/minilogo.png',
   '/icon-192.png',

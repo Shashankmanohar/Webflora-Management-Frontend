@@ -62,7 +62,7 @@ const Login = () => {
             <Card className="w-full max-w-md border-border/50 bg-card/50 backdrop-blur-xl relative z-10 shadow-2xl">
                 <CardHeader className="space-y-4 pb-8">
                     <div className="flex justify-center mb-2">
-                        <img src="/webfloralogo.png" alt="Webflora" className="h-16 object-contain" />
+                        <img src="/webflora-logo.webp" alt="Webflora" className="h-16 object-contain" />
                     </div>
                     <CardDescription className="text-center text-muted-foreground">
                         Sign in to your Webflora account

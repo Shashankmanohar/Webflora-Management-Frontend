@@ -77,7 +77,7 @@ const SidebarContent = ({
         collapsed ? "w-8 h-8" : "w-auto h-10"
       )}>
         <img
-          src="/webfloralogo.png"
+          src={collapsed ? "/minilogo.png" : "/webflora-logo.webp"}
           alt="Webflora"
           className={cn(
             "h-full object-contain transition-all duration-500",
@@ -212,7 +212,7 @@ const AppSidebar = ({ children }: AppSidebarProps) => {
         {/* Mobile Header */}
         <header className="h-16 flex items-center justify-between px-4 border-b border-border bg-sidebar shrink-0 z-50">
           <div className="h-8">
-            <img src="/webfloralogo.png" alt="Webflora" className="h-full object-contain" />
+            <img src="/webflora-logo.webp" alt="Webflora" className="h-full object-contain" />
           </div>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>

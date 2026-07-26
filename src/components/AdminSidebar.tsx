@@ -106,7 +106,7 @@ const SidebarContent = ({
         collapsed ? "w-8 h-8" : "w-auto h-10"
       )}>
         <img
-          src="/webfloralogo.png"
+          src={collapsed ? "/minilogo.png" : "/webflora-logo.webp"}
           alt="Webflora"
           className={cn(
             "h-full object-contain transition-all duration-500",

@@ -93,33 +93,37 @@ const drawSecurityWatermark = (doc: jsPDF, text = "SECURED WEBFLORA DIGITAL ARCH
 
 // Renders a modern corporate header branding with absolute fallback stability
 const drawCorporateHeaderLogo = (doc: jsPDF, x: number, y: number) => {
-    const logoUrl = "/Blacktextlogo.jpeg";
+    const logoUrl = "/Blacktextlogo.png";
     const msmeLogoUrl = "/msme-logo.png";
     
     try {
-        doc.addImage(logoUrl, "JPEG", x, y, 45, 12);
+        doc.addImage(logoUrl, "PNG", x, y, 48, 11);
     } catch (e) {
-        // High-end vector fallback brand logo
-        doc.saveGraphicsState();
-        doc.setFillColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
-        doc.rect(x, y, 3.5, 3.5, "F");
-        doc.rect(x + 4.5, y, 3.5, 3.5, "F");
-        doc.rect(x, y + 4.5, 3.5, 3.5, "F");
-        doc.rect(x + 4.5, y + 4.5, 3.5, 3.5, "F");
+        try {
+            doc.addImage("/Blacktextlogo.jpeg", "JPEG", x, y, 48, 11);
+        } catch (e2) {
+            // High-end vector fallback brand logo
+            doc.saveGraphicsState();
+            doc.setFillColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
+            doc.rect(x, y, 3.5, 3.5, "F");
+            doc.rect(x + 4.5, y, 3.5, 3.5, "F");
+            doc.rect(x, y + 4.5, 3.5, 3.5, "F");
+            doc.rect(x + 4.5, y + 4.5, 3.5, 3.5, "F");
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(13);
-        doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-        doc.text("WEBFLORA", x + 11, y + 4.5);
-        doc.setFontSize(8.5);
-        doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-        doc.text("TECHNOLOGIES", x + 11, y + 9);
-        doc.restoreGraphicsState();
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(13);
+            doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+            doc.text("WEBFLORA", x + 11, y + 4.5);
+            doc.setFontSize(8.5);
+            doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+            doc.text("TECHNOLOGIES", x + 11, y + 9);
+            doc.restoreGraphicsState();
+        }
     }
 
     try {
         // Render MSME logo next to corporate logo with preserved 5:4 aspect ratio (15mm x 12mm) and aligned vertically
-        doc.addImage(msmeLogoUrl, "PNG", x + 48, y, 15, 12);
+        doc.addImage(msmeLogoUrl, "PNG", x + 52, y - 0.5, 15, 12);
     } catch (e) {
         console.error("Failed to load MSME logo in PDF generator", e);
     }
@@ -1089,6 +1093,9 @@ export const generateQuotationPDF = (quotation: any) => {
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         drawPageBorder(doc);
+        if (i > 1) {
+            drawCorporateHeaderLogo(doc, margin, 14);
+        }
 
         // Footer Text
         doc.setFont("helvetica", "normal");
@@ -1803,6 +1810,9 @@ export const generateAgreementPDF = async (agreement: any) => {
         
         // Border
         drawPageBorder(doc);
+        if (i > 1) {
+            drawCorporateHeaderLogo(doc, 24, 18);
+        }
         
         // Top Meta Header
         doc.setFont("helvetica", "normal");
