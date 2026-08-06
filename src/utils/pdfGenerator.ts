@@ -1093,9 +1093,7 @@ export const generateQuotationPDF = (quotation: any) => {
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         drawPageBorder(doc);
-        if (i > 1) {
-            drawCorporateHeaderLogo(doc, margin, 14);
-        }
+        // Logo is not drawn on pages > 1 as per user requirement (only on the first page)
 
         // Footer Text
         doc.setFont("helvetica", "normal");
@@ -1810,9 +1808,7 @@ export const generateAgreementPDF = async (agreement: any) => {
         
         // Border
         drawPageBorder(doc);
-        if (i > 1) {
-            drawCorporateHeaderLogo(doc, 24, 18);
-        }
+        // Logo is not drawn on pages > 1 as per user requirement (only on the first page)
         
         // Top Meta Header
         doc.setFont("helvetica", "normal");
