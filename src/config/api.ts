@@ -1,5 +1,18 @@
 // API Configuration
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : '';
+console.log("VITE_API_BASE_URL resolved from environment:", import.meta.env.VITE_API_BASE_URL);
+
+let baseUrl = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : '';
+
+// Self-healing: if running on localhost but the resolved base URL points to the production site or is empty,
+// force it to point to the local backend port (4002).
+if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1')) {
+    if (baseUrl.includes('crm.webfloratechnologies.com') || !baseUrl) {
+        baseUrl = 'http://localhost:4002';
+        console.log("Self-healing: Overrode API_BASE_URL to localhost backend:", baseUrl);
+    }
+}
+
+export const API_BASE_URL = baseUrl;
 export const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000');
 
 // API Endpoints
