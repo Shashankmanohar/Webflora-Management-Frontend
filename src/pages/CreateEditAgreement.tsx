@@ -202,6 +202,7 @@ const CreateEditAgreement = () => {
       latePaymentCharges: "1.5% interest per month on outstanding dues after 7 days.",
       paymentTerms: "All invoices sent to you, then you have to make payment. Payments are to be made within 7 days of invoice presentation date.",
       refundPolicy: "Advance booking amounts are non-refundable once design assets are locked.",
+      privacyPolicy: "Webflora Technologies is committed to protecting your privacy and data. Any personal information, project assets, database records, and trade credentials shared with us will be processed, stored, and utilized strictly for the performance of software development services and operational support. We do not sell, rent, or share confidential client data with unauthorized third parties except as required by law.",
       paymentMode: "Bank Transfer"
     },
     serviceCommitment: {
@@ -253,7 +254,13 @@ const CreateEditAgreement = () => {
         status: agr.status || "Draft",
         companyInfo: { ...formData.companyInfo, ...agr.companyInfo },
         clientInfo: { ...formData.clientInfo, ...agr.clientInfo },
-        projectInfo: { ...formData.projectInfo, ...agr.projectInfo },
+        projectInfo: {
+          ...formData.projectInfo,
+          ...agr.projectInfo,
+          techStack: agr.projectInfo?.techStack || [],
+          featuresIncluded: agr.projectInfo?.featuresIncluded || [],
+          deliverables: agr.projectInfo?.deliverables || []
+        },
         timeline: {
           ...formData.timeline,
           ...agr.timeline,
@@ -305,24 +312,30 @@ const CreateEditAgreement = () => {
   // Add Item to Arrays
   const addArrayItem = (field: "techStack" | "featuresIncluded" | "deliverables", value: string, clearFn: () => void) => {
     if (!value.trim()) return;
-    setFormData((prev: any) => ({
-      ...prev,
-      projectInfo: {
-        ...prev.projectInfo,
-        [field]: [...prev.projectInfo[field], value.trim()]
-      }
-    }));
+    setFormData((prev: any) => {
+      const currentArray = prev.projectInfo?.[field] || [];
+      return {
+        ...prev,
+        projectInfo: {
+          ...prev.projectInfo,
+          [field]: [...currentArray, value.trim()]
+        }
+      };
+    });
     clearFn();
   };
 
   const removeArrayItem = (field: "techStack" | "featuresIncluded" | "deliverables", index: number) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      projectInfo: {
-        ...prev.projectInfo,
-        [field]: prev.projectInfo[field].filter((_: any, i: number) => i !== index)
-      }
-    }));
+    setFormData((prev: any) => {
+      const currentArray = prev.projectInfo?.[field] || [];
+      return {
+        ...prev,
+        projectInfo: {
+          ...prev.projectInfo,
+          [field]: currentArray.filter((_: any, i: number) => i !== index)
+        }
+      };
+    });
   };
 
 
@@ -455,7 +468,7 @@ const CreateEditAgreement = () => {
         await createAgreement.mutateAsync(formData);
       }
       navigate("/agreements");
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const nextStep = () => {
@@ -471,23 +484,17 @@ const CreateEditAgreement = () => {
     if (!formData.serviceCommitment.commitmentRequired) {
       return "No minimum lock-in commitment is enforced under the terms of this agreement.";
     }
-    return `The Client explicitly agrees to a minimum service lock-in commitment of ${
-      formData.serviceCommitment.commitmentDuration || "1 Year"
-    } commencing on ${
-      formData.serviceCommitment.lockInStartDate
+    return `The Client explicitly agrees to a minimum service lock-in commitment of ${formData.serviceCommitment.commitmentDuration || "1 Year"
+      } commencing on ${formData.serviceCommitment.lockInStartDate
         ? new Date(formData.serviceCommitment.lockInStartDate).toLocaleDateString("en-IN")
         : "the contract start date"
-    }. During this period, the Client agrees to retain and pay for all active services, including: ${
-      formData.serviceCommitment.includedServices && formData.serviceCommitment.includedServices.length > 0
+      }. During this period, the Client agrees to retain and pay for all active services, including: ${formData.serviceCommitment.includedServices && formData.serviceCommitment.includedServices.length > 0
         ? formData.serviceCommitment.includedServices.join(", ")
         : "Hosting, AMC, and Server Management"
-    }. Early termination prior to the commitment end date will trigger termination fees of ${
-      formData.serviceCommitment.earlyTerminationCharges || "50% of the remaining contract duration charges"
-    } and recovery/setup charges of ${
-      formData.serviceCommitment.recoveryCharges || "zero rupees"
-    }, subject to a mandatory written notice period of ${
-      formData.serviceCommitment.noticePeriod || "30 days"
-    }.`;
+      }. Early termination prior to the commitment end date will trigger termination fees of ${formData.serviceCommitment.earlyTerminationCharges || "50% of the remaining contract duration charges"
+      } and recovery/setup charges of ${formData.serviceCommitment.recoveryCharges || "zero rupees"
+      }, subject to a mandatory written notice period of ${formData.serviceCommitment.noticePeriod || "30 days"
+      }.`;
   };
 
   // Render Step Title
@@ -571,13 +578,12 @@ const CreateEditAgreement = () => {
                 <div key={step} className="flex items-center flex-1 last:flex-initial min-w-[36px]">
                   <button
                     onClick={() => setActiveStep(step)}
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
-                      isCurrent
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${isCurrent
                         ? "bg-primary border-primary text-white premium-glow scale-110"
                         : isPassed
-                        ? "bg-primary/20 border-primary/30 text-primary"
-                        : "bg-slate-900 border-white/10 text-slate-500 hover:border-white/20"
-                    }`}
+                          ? "bg-primary/20 border-primary/30 text-primary"
+                          : "bg-slate-900 border-white/10 text-slate-500 hover:border-white/20"
+                      }`}
                   >
                     {isPassed ? <Check className="w-4 h-4" /> : step}
                   </button>
@@ -1279,6 +1285,16 @@ const CreateEditAgreement = () => {
                             className="bg-white/[0.02] border-white/10 text-xs"
                           />
                         </div>
+                        <div className="md:col-span-2 space-y-1.5">
+                          <Label className="text-xs font-bold text-slate-300">Privacy Policy & Data Protection</Label>
+                          <Textarea
+                            value={formData.payment.privacyPolicy || ""}
+                            rows={3}
+                            onChange={(e) => updateNestedField("payment", "privacyPolicy", e.target.value)}
+                            className="bg-white/[0.02] border-white/10 text-xs"
+                            placeholder="Enter privacy policy and data security clauses..."
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1388,11 +1404,10 @@ const CreateEditAgreement = () => {
                                     key={serv}
                                     type="button"
                                     onClick={() => toggleCommitmentService(serv)}
-                                    className={`px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${
-                                      isSel
+                                    className={`px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${isSel
                                         ? "bg-primary/20 border-primary text-primary"
                                         : "bg-white/[0.01] border-white/5 text-slate-400 hover:border-white/10"
-                                    }`}
+                                      }`}
                                   >
                                     {serv}
                                   </button>
@@ -1560,11 +1575,10 @@ const CreateEditAgreement = () => {
                               <button
                                 type="button"
                                 onClick={() => setSignatureMode("draw")}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                                  signatureMode === "draw"
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${signatureMode === "draw"
                                     ? "bg-primary text-slate-950 shadow-md"
                                     : "text-slate-400 hover:text-white"
-                                }`}
+                                  }`}
                               >
                                 <PenTool className="w-3.5 h-3.5" />
                                 Draw Signature
@@ -1572,11 +1586,10 @@ const CreateEditAgreement = () => {
                               <button
                                 type="button"
                                 onClick={() => setSignatureMode("upload")}
-                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                                  signatureMode === "upload"
+                                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${signatureMode === "upload"
                                     ? "bg-primary text-slate-950 shadow-md"
                                     : "text-slate-400 hover:text-white"
-                                }`}
+                                  }`}
                               >
                                 <Upload className="w-3.5 h-3.5" />
                                 Upload Photo / Image
@@ -1733,7 +1746,7 @@ const CreateEditAgreement = () => {
 
           {/* Document Sheet simulating physical paper A4 */}
           <div className="bg-white text-slate-900 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] rounded-[1.5rem] border border-white/10 p-8 min-h-[700px] flex flex-col justify-between overflow-y-auto select-none relative custom-scrollbar max-h-[82vh]">
-            
+
             {/* Low opacity diagonal watermark */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] overflow-hidden select-none">
               <span className="text-primary font-black text-5xl rotate-45 tracking-widest">

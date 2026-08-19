@@ -82,7 +82,7 @@ const drawSecurityWatermark = (doc: jsPDF, text = "SECURED WEBFLORA DIGITAL ARCH
     doc.setFont("helvetica", "bold");
     doc.setFontSize(26);
     // Extemely light grey - perfectly faint to avoid distracting from body text
-    doc.setTextColor(244, 245, 247); 
+    doc.setTextColor(244, 245, 247);
 
     doc.text(text, pageWidth / 2, pageHeight / 2, {
         align: "center",
@@ -95,7 +95,7 @@ const drawSecurityWatermark = (doc: jsPDF, text = "SECURED WEBFLORA DIGITAL ARCH
 const drawCorporateHeaderLogo = (doc: jsPDF, x: number, y: number) => {
     const logoUrl = "/Blacktextlogo.png";
     const msmeLogoUrl = "/msme-logo.png";
-    
+
     try {
         doc.addImage(logoUrl, "PNG", x, y, 48, 11);
     } catch (e) {
@@ -132,7 +132,7 @@ const drawCorporateHeaderLogo = (doc: jsPDF, x: number, y: number) => {
 // Renders a section header with an elegant orange solid rectangle bullet
 const drawSectionHeader = (doc: jsPDF, title: string, x: number, y: number, fontSize = 9.5) => {
     doc.saveGraphicsState();
-    
+
     // Brand Orange Indicator Bullet
     doc.setFillColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
     doc.rect(x, y - 3.2, 2.2, 3.6, "F");
@@ -288,7 +288,7 @@ export const generateInvoicePDF = (invoice: any) => {
                 }
             });
         }
-        
+
         colStyles = {
             0: { cellWidth: 'auto' },
             1: { cellWidth: 35, halign: 'center' },
@@ -324,7 +324,7 @@ export const generateInvoicePDF = (invoice: any) => {
                 formatCurrency(previousDue)
             ]);
         }
-        
+
         colStyles = {
             0: { cellWidth: 12, halign: 'center' },
             1: { cellWidth: 'auto' },
@@ -414,7 +414,7 @@ export const generateInvoicePDF = (invoice: any) => {
         doc.setFont("helvetica", "bold");
         doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
         doc.text("PAYMENT SETTLEMENT METHOD", 20, boxY + 5);
-        
+
         doc.setFont("helvetica", "normal");
         doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
         doc.setFontSize(8);
@@ -636,10 +636,10 @@ export const generateQuotationPDF = (quotation: any) => {
     const isPureSeo = (type: string) => {
         if (!type) return false;
         const normalized = type.toLowerCase();
-        return normalized.includes("seo") && 
-            !normalized.includes("website") && 
-            !normalized.includes("app") && 
-            !normalized.includes("erp") && 
+        return normalized.includes("seo") &&
+            !normalized.includes("website") &&
+            !normalized.includes("app") &&
+            !normalized.includes("erp") &&
             !normalized.includes("software");
     };
 
@@ -660,14 +660,14 @@ export const generateQuotationPDF = (quotation: any) => {
         );
 
         for (let i = 0; i < maxLen; i++) {
-            const pageItem = hasPages && quotation.websitePages[i] 
+            const pageItem = hasPages && quotation.websitePages[i]
                 ? {
                     content: `${quotation.websitePages[i].page}  ${quotation.websitePages[i].included ? "[Included]" : "[Excluded]"}`,
                     styles: {
                         textColor: quotation.websitePages[i].included ? [22, 163, 74] : [148, 163, 184],
                         fontStyle: quotation.websitePages[i].included ? 'bold' : 'normal'
                     }
-                  }
+                }
                 : "";
             const featItem = hasFeats && quotation.adminPanelFeatures[i]
                 ? {
@@ -676,7 +676,7 @@ export const generateQuotationPDF = (quotation: any) => {
                         textColor: quotation.adminPanelFeatures[i].included ? [22, 163, 74] : [148, 163, 184],
                         fontStyle: quotation.adminPanelFeatures[i].included ? 'bold' : 'normal'
                     }
-                  }
+                }
                 : "";
             checklistRows.push([pageItem, featItem]);
         }
@@ -988,7 +988,7 @@ export const generateQuotationPDF = (quotation: any) => {
 
     let payTerms = quotation.paymentTerms || [];
     const isDefaultPayTerms = payTerms.length === 0 || payTerms.every((pt: string) => !pt.trim() || pt.includes("sprints") || pt.includes("frontend presentation"));
-    
+
     if (isDefaultPayTerms) {
         const normalized = (quotation.projectType || "").toLowerCase();
         if (normalized.includes("seo")) {
@@ -1013,7 +1013,7 @@ export const generateQuotationPDF = (quotation: any) => {
 
     let tcs = quotation.termsAndConditions || [];
     const isDefaultTcs = tcs.length === 0 || tcs.every((tc: string) => !tc.trim() || tc.includes("Source code") || tc.includes("visual layout reviews"));
-    
+
     if (isDefaultTcs) {
         const normalized = (quotation.projectType || "").toLowerCase();
         if (normalized.includes("seo")) {
@@ -1152,12 +1152,12 @@ export const generateAgreementPDF = async (agreement: any) => {
     const companyName = agreement.companyInfo?.companyName?.trim() || "Webflora Technologies Private Limited";
     const companyAuthRep = agreement.companyInfo?.authPersonName?.trim() || "Shashank Manohar";
     const companyAuthDesig = agreement.companyInfo?.authPersonDesignation?.trim() || "Managing Director";
-    
+
     const companyAddress = agreement.companyInfo?.companyAddress?.trim() || "IOC Colony, Kumhrar";
     const companyCity = agreement.companyInfo?.city?.trim() || "Patna";
     const companyState = agreement.companyInfo?.state?.trim() || "Bihar";
     const companyZip = agreement.companyInfo?.zip?.trim() || "800026";
-    
+
     const cleanAddressParts = (parts: string[]) => {
         const unique: string[] = [];
         parts.forEach((p) => {
@@ -1175,17 +1175,17 @@ export const generateAgreementPDF = async (agreement: any) => {
     const clientCompanyName = agreement.clientInfo?.companyName?.trim() || agreement.clientInfo?.clientName?.trim() || "Valued Enterprise Client";
     const clientName = agreement.clientInfo?.clientName?.trim() || "Authorized Representative";
     const clientDesig = agreement.clientInfo?.clientDesignation?.trim() || "Director";
-    
+
     const clientAddress = agreement.clientInfo?.address?.trim() || "";
     const clientCity = agreement.clientInfo?.city?.trim() || "Corporate Base";
     const clientState = agreement.clientInfo?.state?.trim() || "";
     const clientZip = agreement.clientInfo?.zipCode?.trim() || "";
-    
+
     const clientAddrParts = [clientAddress, clientCity, clientState, clientZip].filter(Boolean);
     const clientFullAddress = cleanAddressParts(clientAddrParts) || "Corporate Base (Client Operational Site)";
 
     const projectTitle = agreement.projectInfo?.title?.trim() || "Custom Enterprise Software Engineering Services";
-    
+
     const providerName = companyName;
     const receiverName = clientCompanyName;
 
@@ -1196,10 +1196,10 @@ export const generateAgreementPDF = async (agreement: any) => {
 
     const startDateText = formatDateToText(agreement.timeline?.startDate, formatDate(new Date()));
     const endDateText = formatDateToText(agreement.timeline?.endDate, formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)));
-    
+
     const rawNotice = (agreement.serviceCommitment?.noticePeriod || "30").toString().trim();
     const isOnlyDigits = /^\d+$/.test(rawNotice);
-    const durationText = isOnlyDigits 
+    const durationText = isOnlyDigits
         ? `This Agreement shall commence on ${startDateText}, and continue until ${endDateText}, or until terminated by either party with ${rawNotice} days' written notice.`
         : `This Agreement shall commence on ${startDateText}, and continue until ${endDateText}, or until terminated by either party with ${rawNotice}.`;
 
@@ -1209,7 +1209,7 @@ export const generateAgreementPDF = async (agreement: any) => {
 
     const totalFee = grandTotal > 0 ? formatCurrency(grandTotal) : "Custom Contract Dues";
     const payTermsText = agreement.payment?.paymentTerms?.trim() || "Payments are to be made in accordance with the specified phase structure upon invoice generation.";
-    
+
     let paymentText = `${receiverName} agrees to pay ${providerName} a total contract fee of ${totalFee} for the technical services rendered. ${payTermsText}`;
     if (!paymentText.toLowerCase().includes("all invoices sent to you")) {
         paymentText += " All invoices sent to you, then you have to make payment.";
@@ -1219,7 +1219,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     const termText = isOnlyDigits
         ? `Either party may terminate this Agreement upon giving ${rawNotice} days' written notice to the other party.`
         : `Either party may terminate this Agreement upon giving ${rawNotice} to the other party.`;
-    
+
     const jurisdiction = agreement.companyInfo?.state && agreement.companyInfo?.city
         ? `the laws of India, under the exclusive jurisdiction of the judicial courts located in ${agreement.companyInfo.city}, ${agreement.companyInfo.state}`
         : "the laws of India, under the exclusive jurisdiction of the judicial courts located in Patna, Bihar";
@@ -1229,15 +1229,15 @@ export const generateAgreementPDF = async (agreement: any) => {
     const sigText = "Both parties agree to the terms outlined in this Agreement and acknowledge their understanding and acceptance by signing below.";
 
     const companySignDate = formatDateToText(agreement.createdAt, formatDate(new Date()));
-    const clientSignDate = agreement.digitalSignature?.signedAt 
-        ? formatDateToText(agreement.digitalSignature.signedAt, companySignDate) 
+    const clientSignDate = agreement.digitalSignature?.signedAt
+        ? formatDateToText(agreement.digitalSignature.signedAt, companySignDate)
         : companySignDate;
 
     // -------------------------------------------------------------------------
     // DYNAMIC AUTO-COMPACTOR ENGINE (PAGE 1)
     // -------------------------------------------------------------------------
     const cardWidth = pageWidth - 48; // 162mm readable width
-    
+
     // Initial standard layout measurements
     let fontSize = 8.5;
     let lineSpacing = 4.4;
@@ -1263,6 +1263,37 @@ export const generateAgreementPDF = async (agreement: any) => {
     const L_dur = splitDurationTemp.length;
     const L_pay = splitPaymentTemp.length;
 
+    const techStackArray = agreement.projectInfo?.techStack || [];
+    const featuresArray = agreement.projectInfo?.featuresIncluded || [];
+    const deliverablesArray = agreement.projectInfo?.deliverables || [];
+
+    let techStackHeight = 0;
+    if (techStackArray.length > 0) {
+        const techText = techStackArray.join(", ");
+        const splitTech = tempDoc.splitTextToSize(techText, cardWidth - 42);
+        techStackHeight = splitTech.length * lineSpacing + 2.5;
+    }
+
+    let featuresHeight = 0;
+    if (featuresArray.length > 0) {
+        featuresHeight = 4.5;
+        featuresArray.forEach((item: string) => {
+            const splitItem = tempDoc.splitTextToSize("• " + item, cardWidth - 6);
+            featuresHeight += splitItem.length * lineSpacing;
+        });
+        featuresHeight += 2.5;
+    }
+
+    let deliverablesHeight = 0;
+    if (deliverablesArray.length > 0) {
+        deliverablesHeight = 4.5;
+        deliverablesArray.forEach((item: string) => {
+            const splitItem = tempDoc.splitTextToSize("• " + item, cardWidth - 6);
+            deliverablesHeight += splitItem.length * lineSpacing;
+        });
+        deliverablesHeight += 2.5;
+    }
+
     // Calculate dynamic vertical height of elements
     let expectedHeight = 14 // Title Reference Box
         + partyCardHeight * 2 + 8 // Providers cards + padding
@@ -1272,6 +1303,9 @@ export const generateAgreementPDF = async (agreement: any) => {
         + L1 * lineSpacing
         + 5 // Scope text title padding
         + L2 * lineSpacing
+        + techStackHeight
+        + featuresHeight
+        + deliverablesHeight
         + 8 // Section 02 Header + padding
         + durationCardHeight + 5
         + 8 // Section 03 Header + padding
@@ -1324,7 +1358,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFontSize(8.5);
     doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
     doc.text("CONTRACT REFERENCE: " + (agreement.agreementId || "WT-AGR-2026-0006"), pageWidth - 24, 45, { align: "right" });
-    
+
     doc.setFont("helvetica", "normal");
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
     const effDate = formatDateToText(agreement.createdAt, formatDate(new Date()));
@@ -1389,9 +1423,9 @@ export const generateAgreementPDF = async (agreement: any) => {
         doc.setFont("helvetica", "normal");
         doc.setFontSize(fontSize - 0.2);
         doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-        
+
         doc.text(`Rep : ${rep} (${repTitle})`, 28, cardY + 13.5);
-        
+
         // Wrap address cleanly inside the left column space
         const wrappedAddr = doc.splitTextToSize(`Loc : ${fullAddress}`, 82);
         doc.text(wrappedAddr.slice(0, 2), 28, cardY + 17.5, { lineHeightFactor: 1.25 });
@@ -1403,13 +1437,13 @@ export const generateAgreementPDF = async (agreement: any) => {
 
     // SERVICE PROVIDER / FIRST PARTY Row Card
     drawPartyRowCard(
-        y, 
-        "SERVICE PROVIDER / FIRST PARTY", 
-        companyName, 
-        companyAuthRep, 
-        companyAuthDesig, 
-        companyFullAddress, 
-        "+91 8863081255", 
+        y,
+        "SERVICE PROVIDER / FIRST PARTY",
+        companyName,
+        companyAuthRep,
+        companyAuthDesig,
+        companyFullAddress,
+        "+91 8863081255",
         "PROVIDER"
     );
 
@@ -1418,13 +1452,13 @@ export const generateAgreementPDF = async (agreement: any) => {
     // CLIENT / SECOND PARTY Row Card
     const clientPhone = agreement.clientInfo?.contactNumber?.trim() || "N/A (Operational Registry)";
     drawPartyRowCard(
-        y, 
-        "CLIENT / SECOND PARTY", 
-        clientCompanyName, 
-        clientName, 
-        clientDesig, 
-        clientFullAddress, 
-        clientPhone, 
+        y,
+        "CLIENT / SECOND PARTY",
+        clientCompanyName,
+        clientName,
+        clientDesig,
+        clientFullAddress,
+        clientPhone,
         "CLIENT"
     );
 
@@ -1440,7 +1474,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFontSize(fontSize + 0.2);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
     doc.text("Project Title : ", 24, y);
-    
+
     // Auto-wrapped Project Title to prevent right edge spill
     doc.setFont("helvetica", "normal");
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
@@ -1489,6 +1523,69 @@ export const generateAgreementPDF = async (agreement: any) => {
     const splitScope = doc.splitTextToSize(scopeText, cardWidth);
     printParagraph(splitScope, 24, lineSpacing);
     y += gapSpacing;
+
+    // Render Tech Stack
+    if (techStackArray.length > 0) {
+        if (y + 6 > pageHeight - 22) {
+            doc.addPage();
+            y = 23;
+        }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(fontSize + 0.2);
+        doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+        doc.text("Technologies Utilized:", 24, y);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+        
+        const techText = techStackArray.join(", ");
+        const wrappedTech = doc.splitTextToSize(techText, cardWidth - 42);
+        doc.text(wrappedTech, 66, y, { lineHeightFactor: 1.25 });
+        y += wrappedTech.length * (fontSize * 0.4) + 2.5;
+    }
+
+    // Helper for bullet lists
+    const drawBulletList = (title: string, items: string[], currentY: number) => {
+        if (!items || items.length === 0) return currentY;
+        
+        if (currentY + 8 > pageHeight - 22) {
+            doc.addPage();
+            currentY = 23;
+        }
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(fontSize + 0.2);
+        doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+        doc.text(title + ":", 24, currentY);
+        currentY += 4.5;
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(fontSize);
+        doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+        
+        items.forEach((item) => {
+            const wrappedItem = doc.splitTextToSize("•  " + item, cardWidth - 6);
+            for (const line of wrappedItem) {
+                if (currentY + fontSize * 0.42 > pageHeight - 22) {
+                    doc.addPage();
+                    currentY = 23;
+                }
+                doc.text(line, 28, currentY);
+                currentY += lineSpacing;
+            }
+        });
+        
+        return currentY + 2.5;
+    };
+
+    // Render Key Features
+    if (featuresArray.length > 0) {
+        y = drawBulletList("Key Features Included", featuresArray, y);
+    }
+
+    // Render Deliverables
+    if (deliverablesArray.length > 0) {
+        y = drawBulletList("Project Key Deliverables", deliverablesArray, y);
+    }
 
     // -------------------------------------------------------------
     // SECTION 02: TIMELINE (With brand accent orange border)
@@ -1553,7 +1650,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(fontSize);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    
+
     // Left Narrative details
     const splitPayment = doc.splitTextToSize(paymentText, cardWidth - 76);
     doc.text(splitPayment, 28, y + 9.5, { lineHeightFactor: textLineHeight });
@@ -1607,15 +1704,15 @@ export const generateAgreementPDF = async (agreement: any) => {
     if (agreement.serviceCommitment?.commitmentRequired) {
         const duration = agreement.serviceCommitment.commitmentDuration || "No Commitment";
         const startDate = formatDateToText(agreement.serviceCommitment.lockInStartDate, formatDate(new Date()));
-        
+
         const services = agreement.serviceCommitment.includedServices && agreement.serviceCommitment.includedServices.length > 0
             ? agreement.serviceCommitment.includedServices.join(", ")
             : "Hosting, AMC, and Server Management";
-            
+
         const earlyCharges = agreement.serviceCommitment.earlyTerminationCharges || "50% of the remaining contract duration charges";
         const recoveryCharges = agreement.serviceCommitment.recoveryCharges || "zero rupees";
         const notice = agreement.serviceCommitment.noticePeriod || "30 days";
-        
+
         const commitmentText = `The Client explicitly agrees to a minimum service lock-in commitment of ${duration} commencing on ${startDate}. During this period, the Client agrees to retain and pay for all active services, including: ${services}. Early termination prior to the commitment end date will trigger termination fees of ${earlyCharges} and recovery/setup charges of ${recoveryCharges}, subject to a mandatory written notice period of ${notice}.`;
 
         clauses.push({
@@ -1625,9 +1722,24 @@ export const generateAgreementPDF = async (agreement: any) => {
         });
     }
 
+    // Cancellation & Refund Policy
+    const defaultRefundWording = "Advance booking amounts and milestone payments are non-refundable once engineering design assets are locked and development sprints have commenced.";
+    const refundText = agreement.payment?.refundPolicy?.trim() || defaultRefundWording;
+    
+    // Late Payment Charges
+    const defaultLateWording = "Interest at the rate of 1.5% per month will be charged on all outstanding balances and invoices delayed past 7 days from the due date.";
+    const lateText = agreement.payment?.latePaymentCharges?.trim() || defaultLateWording;
+    
+    // Privacy Policy
+    const defaultPrivacyWording = "Webflora Technologies is committed to protecting your privacy and data. Any personal information, project assets, database records, and trade credentials shared with us will be processed, stored, and utilized strictly for the performance of software development services and operational support. We do not sell, rent, or share confidential client data with unauthorized third parties except as required by law.";
+    const privacyText = agreement.payment?.privacyPolicy?.trim() || defaultPrivacyWording;
+
     clauses.push(
         { num: (clauseNum++).toString(), title: "Confidentiality", text: confText },
         { num: (clauseNum++).toString(), title: "Termination", text: termText },
+        { num: (clauseNum++).toString(), title: "Late Payment Penalties", text: lateText },
+        { num: (clauseNum++).toString(), title: "Cancellation & Refund Policy", text: refundText },
+        { num: (clauseNum++).toString(), title: "Privacy Policy & Data Protection", text: privacyText },
         { num: (clauseNum++).toString(), title: "Governing Law", text: govText },
         { num: (clauseNum++).toString(), title: "Amendments", text: amendText },
         { num: (clauseNum++).toString(), title: "Mutual Acceptance", text: sigText }
@@ -1729,7 +1841,7 @@ export const generateAgreementPDF = async (agreement: any) => {
         (doc as any).setLineDashPattern([2, 1.5], 0);
         doc.rect(leftCardX + 5, companyStampY + 1, 56, 17, "S");
         (doc as any).setLineDashPattern([], 0); // Reset
-        
+
         doc.setFont("helvetica", "italic");
         doc.setFontSize(7);
         doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
@@ -1746,7 +1858,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    const finalCompanySignDate = agreement.digitalSignature?.signedAt 
+    const finalCompanySignDate = agreement.digitalSignature?.signedAt
         ? formatDateToText(agreement.digitalSignature.signedAt, companySignDate)
         : companySignDate;
     doc.text(`${companyAuthDesig}  •  ${finalCompanySignDate}`, leftCardX + 4, y2 + sigCardHeight - 3.5);
@@ -1775,7 +1887,7 @@ export const generateAgreementPDF = async (agreement: any) => {
     (doc as any).setLineDashPattern([2, 1.5], 0);
     doc.rect(rightCardX + 5, clientStampY + 1, 56, 17, "S");
     (doc as any).setLineDashPattern([], 0); // Reset
-    
+
     doc.setFont("helvetica", "italic");
     doc.setFontSize(7);
     doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
@@ -1799,29 +1911,29 @@ export const generateAgreementPDF = async (agreement: any) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(5.5);
     doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
-    doc.text("VERIFIED SECURE", qrX + qrWidth/2, y2 + qrWidth + 10.5, { align: "center" });
+    doc.text("VERIFIED SECURE", qrX + qrWidth / 2, y2 + qrWidth + 10.5, { align: "center" });
 
     // Post-process all pages to add uniform borders, headers, footers and watermarks
     const totalPages = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
-        
+
         // Border
         drawPageBorder(doc);
         // Logo is not drawn on pages > 1 as per user requirement (only on the first page)
-        
+
         // Top Meta Header
         doc.setFont("helvetica", "normal");
         doc.setFontSize(7.5);
         doc.setTextColor(SLATE_400_RGB[0], SLATE_400_RGB[1], SLATE_400_RGB[2]);
         doc.text("AGREEMENT ID: " + (agreement.agreementId || "WT-AGR-2026-0006"), 24, 15);
         doc.text("WEBFLORA LEGAL ARCHIVES  •  SECURED DIGITAL CONTRACT", pageWidth - 24, 15, { align: "right" });
-        
+
         // Thin horizontal line under Top Meta
         doc.setDrawColor(SLATE_200_RGB[0], SLATE_200_RGB[1], SLATE_200_RGB[2]);
         doc.setLineWidth(0.4);
         doc.line(24, 17, pageWidth - 24, 17);
-        
+
         // Page Footer
         doc.setFontSize(7.5);
         doc.setFont("helvetica", "normal");
