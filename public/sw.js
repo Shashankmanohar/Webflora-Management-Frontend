@@ -1,4 +1,4 @@
-const CACHE_NAME = 'webflora-cache-v2';
+const CACHE_NAME = 'webflora-cache-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -14,7 +14,20 @@ const urlsToCache = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
+      // Force fetching fresh assets by bypassing the HTTP cache
+      const cachePromises = urlsToCache.map((url) => {
+        return fetch(new Request(url, { cache: 'reload' }))
+          .then((response) => {
+            if (response.ok) {
+              return cache.put(url, response);
+            }
+            throw new Error(`Failed to fetch ${url}`);
+          })
+          .catch((err) => {
+            console.error('Failed to cache asset during SW install:', url, err);
+          });
+      });
+      return Promise.all(cachePromises);
     })
   );
   self.skipWaiting();
@@ -26,6 +39,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Clearing old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -51,8 +65,13 @@ self.addEventListener('fetch', (event) => {
     url.pathname === '/index.html';
 
   if (isHtmlRequest) {
+    // Bypass browser HTTP cache for HTML requests to get the latest built asset hashes
+    const fetchRequest = event.request.mode === 'navigate' 
+      ? new Request(event.request.url, { cache: 'no-cache' }) 
+      : event.request;
+
     event.respondWith(
-      fetch(event.request)
+      fetch(fetchRequest)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseClone = networkResponse.clone();
