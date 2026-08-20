@@ -12,6 +12,13 @@ if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' |
     }
 }
 
+// Production fallback: if running on the production frontend domain and baseUrl is still empty,
+// point to the Vercel-deployed backend.
+if (typeof window !== 'undefined' && window.location.hostname === 'crm.webfloratechnologies.com' && !baseUrl) {
+    baseUrl = 'https://webflora-management-backend.vercel.app';
+    console.log("Production fallback: API_BASE_URL set to:", baseUrl);
+}
+
 export const API_BASE_URL = baseUrl;
 export const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000');
 
