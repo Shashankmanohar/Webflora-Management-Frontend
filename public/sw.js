@@ -50,8 +50,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests and skip API calls from service worker cache
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+  // Only handle GET requests, skip API calls, and skip non-http(s) schemes (e.g. chrome-extension://)
+  const reqUrl = new URL(event.request.url);
+  if (event.request.method !== 'GET' || event.request.url.includes('/api/') || !reqUrl.protocol.startsWith('http')) {
     return;
   }
 
