@@ -366,47 +366,82 @@ export const generateInvoicePDF = (invoice: any) => {
     let paidAmount = statusText === 'PAID' ? grandTotal : 0;
     let dueAmount = grandTotal - paidAmount;
 
-    const boxHeight = 34;
+    // Project Total & Project Remaining Due
+    const projectTotalAmount = Number(invoice.projectTotal || projectTotal || grandTotal);
+    let projectRemainingDue = invoice.projectDue !== undefined && invoice.projectDue > 0 
+        ? Number(invoice.projectDue) 
+        : Math.max(0, projectTotalAmount - grandTotal);
+    const hasProjectContract = projectTotalAmount > grandTotal || projectRemainingDue > 0;
+
+    const cardWidth = 75;
+    const boxHeight = hasProjectContract ? 45 : 34;
     const boxY = finalY + 10;
 
     // soft orange-cream financial summary card
     doc.setFillColor(ORANGE_50_RGB[0], ORANGE_50_RGB[1], ORANGE_50_RGB[2]);
-    doc.rect(pageWidth - 85, boxY, 65, boxHeight, "F");
+    doc.rect(pageWidth - (cardWidth + 20), boxY, cardWidth, boxHeight, "F");
     doc.setDrawColor(254, 215, 170); // Orange 200
     doc.setLineWidth(0.35);
-    doc.rect(pageWidth - 85, boxY, 65, boxHeight, "S");
+    doc.rect(pageWidth - (cardWidth + 20), boxY, cardWidth, boxHeight, "S");
 
-    let currentY = boxY + 7;
+    let currentY = boxY + 6.5;
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
 
+    // Optional: Total Project Contract Value if this invoice is an installment
+    if (hasProjectContract) {
+        doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
+        doc.text("Project Total :", pageWidth - (cardWidth + 15), currentY);
+        doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
+        doc.text(formatCurrency(projectTotalAmount), pageWidth - 25, currentY, { align: "right" });
+        currentY += 5.5;
+    }
+
     // Total Invoice
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.text("Invoice Total :", pageWidth - 80, currentY);
+    doc.text("Invoice Total :", pageWidth - (cardWidth + 15), currentY);
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
     doc.text(formatCurrency(grandTotal), pageWidth - 25, currentY, { align: "right" });
 
-    currentY += 6.5;
+    currentY += 5.5;
 
     // Amount Paid
     doc.setTextColor(SLATE_600_RGB[0], SLATE_600_RGB[1], SLATE_600_RGB[2]);
-    doc.text("Disbursement :", pageWidth - 80, currentY);
+    doc.text("Disbursement :", pageWidth - (cardWidth + 15), currentY);
     doc.setTextColor(22, 163, 74); // Green
     doc.text(formatCurrency(paidAmount), pageWidth - 25, currentY, { align: "right" });
 
     // Accent line
-    currentY += 3.5;
+    currentY += 3.0;
     doc.setDrawColor(254, 215, 170);
     doc.setLineWidth(0.35);
-    doc.line(pageWidth - 80, currentY, pageWidth - 25, currentY);
-    currentY += 6.5;
+    doc.line(pageWidth - (cardWidth + 15), currentY, pageWidth - 25, currentY);
+    currentY += 5.5;
 
-    // Remaining Balance
+    // Invoice Balance Due
     doc.setTextColor(SLATE_900_RGB[0], SLATE_900_RGB[1], SLATE_900_RGB[2]);
-    doc.setFontSize(8.5);
-    doc.text("Balance Due :", pageWidth - 80, currentY);
-    doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
+    doc.setFontSize(8.2);
+    doc.text("Invoice Due :", pageWidth - (cardWidth + 15), currentY);
+    if (dueAmount > 0) {
+        doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
+    } else {
+        doc.setTextColor(22, 163, 74);
+    }
     doc.text(formatCurrency(dueAmount), pageWidth - 25, currentY, { align: "right" });
+
+    // Project Remaining Balance (if any)
+    if (hasProjectContract) {
+        currentY += 3.0;
+        doc.setDrawColor(254, 215, 170);
+        doc.setLineWidth(0.35);
+        doc.line(pageWidth - (cardWidth + 15), currentY, pageWidth - 25, currentY);
+        currentY += 5.5;
+
+        doc.setFontSize(8.2);
+        doc.setTextColor(BRAND_ORANGE_RGB[0], BRAND_ORANGE_RGB[1], BRAND_ORANGE_RGB[2]);
+        doc.text("Project Due :", pageWidth - (cardWidth + 15), currentY);
+        doc.text(formatCurrency(projectRemainingDue), pageWidth - 25, currentY, { align: "right" });
+    }
 
     // Payment Info Frame or Certified stamp (Left side)
     if (dueAmount > 0 || statusText === 'DUE') {

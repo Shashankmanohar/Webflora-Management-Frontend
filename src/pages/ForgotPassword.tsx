@@ -16,19 +16,31 @@ const ForgotPassword = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email) {
+        const cleanEmail = email.trim();
+        if (!cleanEmail) {
             toast.error('Please enter your registered email');
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await axiosInstance.post(API_ENDPOINTS.AUTH_FORGOT_PASSWORD, { email, role });
+            const response = await axiosInstance.post(
+                API_ENDPOINTS.AUTH_FORGOT_PASSWORD, 
+                { email: cleanEmail, role },
+                { timeout: 45000 } // Allow up to 45s for email delivery
+            );
             toast.success(response.data.message || 'OTP sent to your email');
             // Navigate to OTP verification page and pass email/role in state
-            navigate('/verify-otp', { state: { email, role } });
+            navigate('/verify-otp', { state: { email: cleanEmail, role } });
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Failed to send OTP';
+            let errorMessage = 'Failed to send OTP';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                errorMessage = 'Server is taking longer than usual to send email. Please check your inbox or try again.';
+            } else if (!error.response) {
+                errorMessage = 'Network error: Please verify your connection or ensure backend is running.';
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);

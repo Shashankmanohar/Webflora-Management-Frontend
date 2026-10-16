@@ -8,6 +8,37 @@
   <meta name="description" content="Efficiently manage operations, projects, clients, and communications with Webflora Management." />
   <meta name="author" content="Shashank Manohar" />
 
+  <!-- Self-healing: if an asset fails to load after a deployment, clear stale Service Worker & reload fresh -->
+  <script>
+    window.addEventListener('error', function (e) {
+      var target = e.target;
+      if (target && (target.tagName === 'LINK' || target.tagName === 'SCRIPT')) {
+        var url = target.src || target.href;
+        if (url && (url.indexOf('.css') !== -1 || url.indexOf('.js') !== -1)) {
+          if (!sessionStorage.getItem('sw_asset_recovery_done')) {
+            sessionStorage.setItem('sw_asset_recovery_done', '1');
+            console.warn('Asset failed to load. Clearing Service Worker and reloading:', url);
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                return Promise.all(registrations.map(function (reg) { return reg.unregister(); }));
+              }).then(function () {
+                if (window.caches) {
+                  return caches.keys().then(function (keys) {
+                    return Promise.all(keys.map(function (key) { return caches.delete(key); }));
+                  });
+                }
+              }).finally(function () {
+                window.location.reload(true);
+              });
+            } else {
+              window.location.reload(true);
+            }
+          }
+        }
+      }
+    }, true);
+  </script>
+
   <!-- PWA & Mobile Icons -->
   <link rel="icon" type="image/png" href="/minilogo.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -37,12 +68,45 @@
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
   <script>
+    // Reset recovery flag on successful window load
+    window.addEventListener('load', function () {
+      sessionStorage.removeItem('sw_asset_recovery_done');
+    });
+
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
-          .catch((err) => console.error('Service Worker registration failed:', err));
-      });
+      const isLocalhost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+      );
+
+      if (isLocalhost) {
+        // In local development, unregister any active service worker
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.unregister();
+          }
+        }).catch(() => {});
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => {
+              console.log('Service Worker registered successfully:', reg.scope);
+              // Check for SW updates
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('New content available, auto-updating...');
+                    }
+                  };
+                }
+              };
+            })
+            .catch((err) => console.error('Service Worker registration failed:', err));
+        });
+      }
     }
   </script>
 </body>

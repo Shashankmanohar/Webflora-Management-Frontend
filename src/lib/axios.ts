@@ -48,9 +48,11 @@ axiosInstance.interceptors.response.use(
             console.error('Access denied');
         }
 
-        // Handle network errors
-        if (!error.response) {
-            console.error('Network error - please check your connection');
+        // Handle network errors and timeouts
+        if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+            console.error('Request timed out - the server took too long to respond');
+        } else if (!error.response) {
+            console.error('Network error - please check your connection or backend server');
         }
 
         return Promise.reject(error);

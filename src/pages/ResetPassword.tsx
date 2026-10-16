@@ -41,16 +41,27 @@ const ResetPassword = () => {
 
         setIsLoading(true);
         try {
-            const response = await axiosInstance.post(API_ENDPOINTS.AUTH_RESET_PASSWORD, {
-                email,
-                otp,
-                role,
-                newPassword
-            });
+            const response = await axiosInstance.post(
+                API_ENDPOINTS.AUTH_RESET_PASSWORD, 
+                {
+                    email: email?.trim(),
+                    otp: otp?.trim(),
+                    role,
+                    newPassword
+                },
+                { timeout: 30000 }
+            );
             toast.success(response.data.message || 'Password reset successful');
             navigate('/login');
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Failed to reset password';
+            let errorMessage = 'Failed to reset password';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                errorMessage = 'Request timed out. Please try again.';
+            } else if (!error.response) {
+                errorMessage = 'Network error: Please verify your connection or ensure backend is running.';
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);

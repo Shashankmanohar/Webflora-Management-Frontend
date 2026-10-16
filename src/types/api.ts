@@ -422,6 +422,15 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
     const previousDue = Number(invoice.previousDue) || 0;
     const grandTotal = invoice.grandTotal !== undefined ? invoice.grandTotal : (amount + previousDue);
 
+    // Calculate combined project dues & total amounts
+    const allProjects = projects.length > 0 ? projects : (firstProject ? [firstProject] : []);
+    const projectDue = allProjects.length > 0 
+        ? allProjects.reduce((sum, p) => sum + (Number((p as any).dueAmount) || 0), 0)
+        : (typeof (invoice as any).projectDue === 'number' ? (invoice as any).projectDue : 0);
+    const projectTotal = allProjects.length > 0
+        ? allProjects.reduce((sum, p) => sum + (Number((p as any).totalAmount) || 0), 0)
+        : (typeof (invoice as any).projectTotal === 'number' ? (invoice as any).projectTotal : amount);
+
     return {
         id: invoice._id,
         number: invoice.invoiceNo,
@@ -444,10 +453,10 @@ export const adaptInvoiceData = (invoice: InvoiceBackend): any => {
             ? invoice.projectIds.map((p: any) => typeof p === 'string' ? p : p._id)
             : [typeof invoice.projectId === 'string' ? invoice.projectId : firstProject?._id],
         selectedDues: invoice.selectedDues || [],
-        projectDue: (firstProject as any)?.dueAmount ?? 0,
+        projectDue: projectDue,
         previousDue: previousDue,
         dueBreakdown: invoice.dueBreakdown || [],
-        projectTotal: (firstProject as any)?.totalAmount || amount,
+        projectTotal: projectTotal,
         items: invoice.items || [],
     };
 };

@@ -24,18 +24,30 @@ const VerifyOTP = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (otp.length !== 6) {
+        const cleanOtp = otp.trim();
+        if (cleanOtp.length !== 6) {
             toast.error('Please enter a valid 6-digit OTP');
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await axiosInstance.post(API_ENDPOINTS.AUTH_VERIFY_OTP, { email, otp, role });
+            const response = await axiosInstance.post(
+                API_ENDPOINTS.AUTH_VERIFY_OTP, 
+                { email: email?.trim(), otp: cleanOtp, role },
+                { timeout: 30000 }
+            );
             toast.success(response.data.message || 'OTP verified');
-            navigate('/reset-password', { state: { email, otp, role } });
+            navigate('/reset-password', { state: { email: email?.trim(), otp: cleanOtp, role } });
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Verification failed';
+            let errorMessage = 'Verification failed';
+            if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                errorMessage = 'Request timed out. Please try again.';
+            } else if (!error.response) {
+                errorMessage = 'Network error: Please verify your connection or ensure backend is running.';
+            }
             toast.error(errorMessage);
         } finally {
             setIsLoading(false);

@@ -96,54 +96,14 @@ const Invoices = () => {
     description: "",
     method: "",
     date: new Date().toISOString().split('T')[0],
-    status: "paid",
+    status: "pending",
     previousDue: 0,
     items: [],
   });
 
   // Helper to sync items based on selection
   const syncItems = (currentItems: any[], newProjectIds: string[], newSelectedDues: string[]) => {
-    let updatedItems = [...currentItems];
-
-    // 1. Remove auto-items that are no longer selected
-    updatedItems = updatedItems.filter(item => {
-      const isProjectItem = projects.some((p: any) => p.name === item.service);
-      const isDueItem = item.service.startsWith("Due of ");
-      
-      if (isProjectItem) {
-        return newProjectIds.some((id: any) => projects.find((p: any) => p.id === id)?.name === item.service);
-      }
-      if (isDueItem) {
-        const projectName = item.service.replace("Due of ", "");
-        return newSelectedDues.some((id: any) => projects.find((p: any) => p.id === id)?.projectName === projectName || projects.find((p: any) => p.id === id)?.name === projectName);
-      }
-      return true; // Keep manual items
-    });
-
-    // Ensure we don't have overlapping IDs in projectIds and selectedDues
-    const uniqueProjectIds = newProjectIds;
-    const uniqueSelectedDues = newSelectedDues.filter(id => !uniqueProjectIds.includes(id));
-
-    // 2. Add missing project items (only those with an outstanding balance)
-    uniqueProjectIds.forEach((id: any) => {
-      const project = projects.find((p: any) => p.id === id);
-      if (project && Number(project.dueAmount) > 0 && !updatedItems.some(item => item.service === project.name)) {
-        updatedItems.push({ service: project.name, units: "1", price: Number(project.dueAmount) });
-      }
-    });
-
-    // 3. Add missing due items (only if NOT already added as a primary project item)
-    uniqueSelectedDues.forEach((id: any) => {
-      const project = projects.find((p: any) => p.id === id);
-      if (project && Number(project.dueAmount) > 0) {
-        const serviceName = `Due of ${project.projectName || project.name}`;
-        if (!updatedItems.some(item => item.service === serviceName)) {
-          updatedItems.push({ service: serviceName, units: "1", price: Number(project.dueAmount) });
-        }
-      }
-    });
-
-    return updatedItems;
+    return currentItems;
   };
 
   useEffect(() => {
@@ -222,7 +182,7 @@ const Invoices = () => {
         description: "",
         method: "",
         date: new Date().toISOString().split('T')[0],
-        status: "paid",
+        status: "pending",
         previousDue: 0,
         items: [],
       });
@@ -542,53 +502,80 @@ const Invoices = () => {
                       {projects
                         .filter((p: any) => (p.clientId === formData.clientId || !formData.clientId) && (Number(p.dueAmount) > 0 || formData.projectIds.includes(p.id)))
                         .map((project: any) => (
-                          <div key={project.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`project-${project.id}`}
-                              checked={formData.projectIds.includes(project.id)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  // Mutual exclusion: remove from selectedDues
-                                  const newSelectedDues = formData.selectedDues.filter(id => id !== project.id);
-                                  const newTotalDue = projects
-                                    .filter((proj: any) => newSelectedDues.includes(proj.id))
-                                    .reduce((sum: number, proj: any) => sum + (Number(proj.dueAmount) || 0), 0);
+                          <div key={project.id} className="flex items-center justify-between p-2 rounded-lg border bg-card/60 hover:bg-accent/40 transition-colors">
+                            <div className="flex items-center space-x-2.5 flex-1 min-w-0 pr-2">
+                              <Checkbox
+                                id={`project-${project.id}`}
+                                checked={formData.projectIds.includes(project.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    const newSelectedDues = formData.selectedDues.filter(id => id !== project.id);
+                                    const newTotalDue = projects
+                                      .filter((proj: any) => newSelectedDues.includes(proj.id))
+                                      .reduce((sum: number, proj: any) => sum + (Number(proj.dueAmount) || 0), 0);
 
-                                  setFormData({ 
-                                    ...formData, 
-                                    projectIds: [...formData.projectIds, project.id],
-                                    selectedDues: newSelectedDues,
-                                    previousDue: newTotalDue
-                                  });
-                                } else {
-                                  setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`project-${project.id}`}
-                              className="text-sm font-medium leading-none cursor-pointer flex-1"
-                            >
-                              {project.name}
-                            </label>
-                            <span className="text-[10px] text-muted-foreground">
-                              Due: {formatCurrency(project.dueAmount)}
-                            </span>
+                                    setFormData({ 
+                                      ...formData, 
+                                      projectIds: [...formData.projectIds, project.id],
+                                      selectedDues: newSelectedDues,
+                                      previousDue: newTotalDue
+                                    });
+                                  } else {
+                                    setFormData({ ...formData, projectIds: formData.projectIds.filter(id => id !== project.id) });
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`project-${project.id}`}
+                                className="text-xs font-semibold leading-tight cursor-pointer truncate"
+                              >
+                                {project.name}
+                              </label>
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] whitespace-nowrap">
+                              <span className="text-muted-foreground">
+                                Total: <strong className="text-foreground">{formatCurrency(project.budget || 0)}</strong>
+                              </span>
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                Paid: <strong>{formatCurrency(project.totalPaid || 0)}</strong>
+                              </span>
+                              <span className="text-destructive font-bold px-1.5 py-0.5 rounded bg-destructive/10">
+                                Due: {formatCurrency(project.dueAmount || 0)}
+                              </span>
+                            </div>
                           </div>
                         ))}
                     </div>
                   </ScrollArea>
                 </div>
                 {formData.projectIds.length > 0 && (
-                  <p className="text-[10px] font-medium text-muted-foreground mt-1 px-1 flex justify-between">
-                    <span>Combined Budget:</span>
-                    <span className="text-primary font-bold">
-                      {formatCurrency(projects
-                        .filter((p: any) => formData.projectIds.includes(p.id))
-                        .reduce((sum: number, p: any) => sum + (p.dueAmount || 0), 0)
-                      )}
-                    </span>
-                  </p>
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 mt-2 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-muted-foreground">Selected Project(s) Total: </span>
+                      <strong className="text-foreground">
+                        {formatCurrency(projects
+                          .filter((p: any) => formData.projectIds.includes(p.id))
+                          .reduce((sum: number, p: any) => sum + (Number(p.budget) || 0), 0)
+                        )}
+                      </strong>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        Paid: <strong>
+                          {formatCurrency(projects
+                            .filter((p: any) => formData.projectIds.includes(p.id))
+                            .reduce((sum: number, p: any) => sum + (Number(p.totalPaid) || 0), 0)
+                          )}
+                        </strong>
+                      </span>
+                      <span className="text-destructive font-bold">
+                        Remaining Due: {formatCurrency(projects
+                          .filter((p: any) => formData.projectIds.includes(p.id))
+                          .reduce((sum: number, p: any) => sum + (Number(p.dueAmount) || 0), 0)
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -1255,6 +1242,12 @@ const Invoices = () => {
                   <span className="text-base font-bold text-primary">GRAND TOTAL:</span>
                   <span className="text-2xl font-black text-primary">{formatCurrency(selectedInvoice.grandTotal)}</span>
                 </div>
+                {selectedInvoice.projectDue > 0 && (
+                  <div className="pt-2 border-t border-dashed border-orange-300 dark:border-orange-800 flex justify-between items-center text-xs text-orange-600 dark:text-orange-400">
+                    <span className="font-semibold">Project Remaining Due:</span>
+                    <span className="font-bold">{formatCurrency(selectedInvoice.projectDue)}</span>
+                  </div>
+                )}
               </div>
               {selectedInvoice.status !== 'paid' && selectedInvoice.grandTotal > 0 && (
                 <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 flex justify-between items-center">

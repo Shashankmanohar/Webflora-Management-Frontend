@@ -20,7 +20,7 @@ if (typeof window !== 'undefined' && window.location.hostname === 'crm.webflorat
 }
 
 export const API_BASE_URL = baseUrl;
-export const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '10000');
+export const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '45000');
 
 // API Endpoints
 export const API_ENDPOINTS = {
